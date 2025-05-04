@@ -101,7 +101,7 @@ public class UserDAO {
             pstmt.setString(1, user.getUsername());
             pstmt.setString(2, hashedPassword);
             pstmt.setString(3, user.getEmail());
-            pstmt.setString(4, user.getRole().toLowerCase());
+            pstmt.setString(4, user.getRole());
             pstmt.setDate(5, new java.sql.Date(user.getCreatedAt().getTime()));
 
 

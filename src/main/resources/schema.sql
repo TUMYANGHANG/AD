@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS student (
                                        user_id INT NOT NULL,
                                        rollno VARCHAR(20) NOT NULL UNIQUE,
                                        classname VARCHAR(50) NOT NULL,
+                                       photo_path VARCHAR(255) DEFAULT NULL,
                                        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -29,3 +30,6 @@ CREATE TABLE IF NOT EXISTS teacher (
                                        department VARCHAR(50) NOT NULL,
                                        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+# -- Add photo_path column to existing student table (if not included in creation)
+# ALTER TABLE student ADD COLUMN photo_path VARCHAR(255) DEFAULT NULL;
