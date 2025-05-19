@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%--<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>--%>
+<!-- <%--<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>--%> -->
 <%@ page import="java.util.*, java.text.SimpleDateFormat" %>
 <%
   // Simulate dynamic data for the graduation section
@@ -10,19 +10,19 @@
   grad1.put("story", "Astha transformed from a shy student to a confident leader, spearheading community projects and earning a prestigious internship at a global firm. Her dedication and growth at Itahari International College paved the way for her success.");
   grad1.put("image", "Images/Astha.jpg");
   Map<String, String> grad2 = new HashMap<>();
-  grad2.put("name", "Raj");
+  grad2.put("name", "Umar");
   grad2.put("title", "Innovating the Future");
-  grad2.put("story", "Raj’s groundbreaking research in sustainable technology won national awards, paving the way for a career in environmental engineering. His time at our college fueled his passion for innovation.");
+  grad2.put("story", "Umar's groundbreaking research in sustainable technology won national awards, paving the way for a career in environmental engineering. His time at our college fueled his passion for innovation.");
   grad2.put("image", "Images/Umar.jpg");
   Map<String, String> grad3 = new HashMap<>();
-  grad3.put("name", "Maria");
+  grad3.put("name", "Tumyhang");
   grad3.put("title", "Breaking Barriers");
-  grad3.put("story", "Maria overcame challenges to become the first in her family to graduate, now inspiring others as a motivational speaker and educator. Her resilience and support from our community made her journey possible.");
+  grad3.put("story", "Tumyhang overcame challenges to become the first in her family to graduate, now inspiring others as a motivational speaker and educator. Her resilience and support from our community made her journey possible.");
   grad3.put("image", "Images/tume.jpg");
   Map<String, String> grad4 = new HashMap<>();
-  grad4.put("name", "Ahmed");
+  grad4.put("name", "Nicholos");
   grad4.put("title", "Global Impact");
-  grad4.put("story", "Ahmed’s dedication to social justice led him to work with international NGOs, making a difference in communities worldwide. His education at Itahari International College equipped him with the skills to create change.");
+  grad4.put("story", "Nicholos's dedication to social justice led him to work with international NGOs, making a difference in communities worldwide. His education at Itahari International College equipped him with the skills to create change.");
   grad4.put("image", "Images/nicholos.jpg");
   graduates.add(grad1);
   graduates.add(grad2);
@@ -604,7 +604,7 @@
   <div style="max-width: 1200px; margin: 0 auto; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
     <div style="font-size: 24px; font-weight: bold; color: #1e90ff;">Itahari International College</div>
     <div style="display: flex; gap: 24px;">
-      <a href="#home" style="color: #4B5563; text-decoration: none; font-size: 16px;">Home</a>
+      <a href="index.jsp" style="color: #4B5563; text-decoration: none; font-size: 16px;">Home</a>
       <a href="#about" style="color: #4B5563; text-decoration: none; font-size: 16px;">About</a>
       <a href="#features" style="color: #4B5563; text-decoration: none; font-size: 16px;">Features</a>
       <a href="#contact" style="color: #4B5563; text-decoration: none; font-size: 16px;">Contact</a>
@@ -617,8 +617,8 @@
       <%
       } else {
       %>
-      <a href="LoginnavServlet" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px;">Login</a>
-      <a href="Registryform" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px;">Register</a>
+      <a href="${pageContext.request.contextPath}/Nav_login" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px;">Login</a>
+      <a href="${pageContext.request.contextPath}/register" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px;">Register</a>
       <%
         }
       %>
@@ -631,7 +631,7 @@
   <div style="max-width: 1200px; margin: 0 auto; text-align: center;" data-aos="fade-up" data-aos-duration="1200">
     <h1 style="font-size: 48px; font-weight: bold; margin-bottom: 16px; color: #fff;">Student Attendance Management System</h1>
     <p style="font-size: 20px; margin-bottom: 16px; color: #fff;">
-      Welcome to Itahari International College’s innovative platform designed to simplify attendance tracking for students, teachers, and administrators.
+      Welcome to Itahari International College's innovative platform designed to simplify attendance tracking for students, teachers, and administrators.
       <%
         if (username != null) {
       %>
@@ -641,7 +641,7 @@
       %>
     </p>
     <p style="font-size: 18px; margin-bottom: 32px; color: #fff;">Our system ensures seamless communication and real-time updates, making it easier for everyone to stay connected and informed. Get started today and experience a smarter way to manage attendance!</p>
-    <a href="/login" class="cta-button" style="background-color: #ffd700; color: #1e90ff; padding: 12px 24px; border-radius: 9999px; font-weight: 600; text-decoration: none;" data-aos="zoom-in" data-aos-delay="200">Get Started</a>
+    <a href="${pageContext.request.contextPath}/Nav_login" class="cta-button" style="background-color: #ffd700; color: #1e90ff; padding: 12px 24px; border-radius: 9999px; font-weight: 600; text-decoration: none;" data-aos="zoom-in" data-aos-delay="200">Get Started</a>
     <div class="note" style="color: #fff; background-color: rgba(0, 0, 0, 0.5); max-width: 600px; margin: 16px auto;" data-aos="fade-up" data-aos-delay="300">
       Today is <%= currentDate %>. Check your portal for the latest updates!
     </div>
@@ -653,7 +653,7 @@
   <div class="about-container">
     <h2 style="font-size: 36px; font-weight: bold; margin-bottom: 24px; color: #2f4f4f;" data-aos="fade-up">About Our College</h2>
     <p style="font-size: 18px; color: #4B5563; max-width: 800px; margin: 0 auto 32px;" data-aos="fade-up" data-aos-delay="100">Discover what makes Itahari International College a leading institution for higher education. From our mission to our state-of-the-art facilities, we are committed to shaping the future of our students.</p>
-    <div class="note" data-aos="fade-up" data-aos-delay="150">Note: Click the tabs below to explore different aspects of our college and see how we support our students’ journey.</div>
+    <div class="note" data-aos="fade-up" data-aos-delay="150">Note: Click the tabs below to explore different aspects of our college and see how we support our students' journey.</div>
     <div class="about-tabs" data-aos="fade-up" data-aos-delay="200">
       <div class="about-tab active" data-tab="mission">Our Mission</div>
       <div class="about-tab" data-tab="facilities">Facilities</div>
@@ -671,7 +671,7 @@
       <img src="Images/Classes.jpg" alt="State-of-the-Art Facilities">
       <div class="content-text">
         <h3>State-of-the-Art Facilities</h3>
-        <p>Our campus is equipped with modern classrooms, advanced laboratories, and a comprehensive library, all designed to enhance the learning experience. Whether you’re conducting research or collaborating on projects, our facilities provide the perfect environment for success.</p>
+        <p>Our campus is equipped with modern classrooms, advanced laboratories, and a comprehensive library, all designed to enhance the learning experience. Whether you're conducting research or collaborating on projects, our facilities provide the perfect environment for success.</p>
         <p style="margin-top: 16px;">From high-speed Wi-Fi to cutting-edge technology, we ensure our students have access to the tools they need to excel in their studies and beyond.</p>
       </div>
     </div>
@@ -714,7 +714,7 @@
   <div class="library-container">
     <div style="width: 100%; text-align: center; margin-bottom: 32px;" data-aos="fade-up">
       <h2 style="font-size: 36px; font-weight: bold; margin-bottom: 24px; color: #2f4f4f;">Our Library</h2>
-      <p style="font-size: 18px; color: #4B5563; max-width: 800px; margin: 0 auto;">The library at Itahari International College is more than just a place to study—it’s a hub of knowledge and inspiration. Explore our vast collection of books, journals, and digital resources tailored to support your academic goals.</p>
+      <p style="font-size: 18px; color: #4B5563; max-width: 800px; margin: 0 auto;">The library at Itahari International College is more than just a place to study—it's a hub of knowledge and inspiration. Explore our vast collection of books, journals, and digital resources tailored to support your academic goals.</p>
       <div class="note" style="max-width: 800px; margin: 16px auto;">Note: Visit the library during open hours (8 AM - 6 PM) or access our online resources 24/7 through the student portal.</div>
     </div>
     <div class="library-images" data-aos="fade-right" data-aos-duration="1000">
@@ -722,7 +722,7 @@
       <img src="Images/Library.jpg" alt="Library Shelves">
     </div>
     <div class="library-content" data-aos="fade-left" data-aos-duration="1000">
-      <p style="color: #4B5563; font-size: 18px; max-width: 500px;">Our library offers a quiet and resourceful space for students to study and research, with an extensive collection of books, e-books, and digital resources. Whether you’re preparing for exams or exploring new topics, our library is your go-to destination.</p>
+      <p style="color: #4B5563; font-size: 18px; max-width: 500px;">Our library offers a quiet and resourceful space for students to study and research, with an extensive collection of books, e-books, and digital resources. Whether you're preparing for exams or exploring new topics, our library is your go-to destination.</p>
     </div>
   </div>
 </section>
@@ -755,7 +755,7 @@
       <img src="Images/class.webp" alt="Students in Lecture Hall">
     </div>
     <div class="classroom-content" data-aos="fade-left" data-aos-duration="1000">
-      <p style="color: #4B5563; font-size: 18px; max-width: 500px;">Step into our modern classrooms, where interactive whiteboards and collaborative spaces create an ideal setting for active learning. Whether it’s group discussions or hands-on projects, our environment encourages participation and innovation.</p>
+      <p style="color: #4B5563; font-size: 18px; max-width: 500px;">Step into our modern classrooms, where interactive whiteboards and collaborative spaces create an ideal setting for active learning. Whether it's group discussions or hands-on projects, our environment encourages participation and innovation.</p>
       <div class="note">Note: Check your class schedule in the student portal to stay updated on room assignments and timings.</div>
     </div>
   </div>
@@ -766,7 +766,7 @@
   <div class="campus-container">
     <div style="width: 100%; text-align: center; margin-bottom: 32px;" data-aos="fade-up">
       <h2 style="font-size: 36px; font-weight: bold; margin-bottom: 24px; color: #2f4f4f;">Campus Life</h2>
-      <p style="font-size: 18px; color: #4B5563; max-width: 800px; margin: 0 auto;">Life at Itahari International College is vibrant and full of opportunities. From social events to student clubs, there’s something for everyone to enjoy and grow.</p>
+      <p style="font-size: 18px; color: #4B5563; max-width: 800px; margin: 0 auto;">Life at Itahari International College is vibrant and full of opportunities. From social events to student clubs, there's something for everyone to enjoy and grow.</p>
     </div>
     <div class="campus-content" data-aos="fade-left" data-aos-duration="1000">
       <p style="color: #4B5563; font-size: 18px; max-width: 500px;">Our campus is a lively community with beautiful courtyards, exciting social events, and a supportive network of peers and faculty. Get involved in student organizations or attend cultural festivals to make the most of your college experience.</p>
@@ -822,7 +822,7 @@
     <%
       }
     %>
-    <form action="subscribe" method="post" data-aos="fade-up" data-aos-delay="400">
+    <form action="${pageContext.request.contextPath}/Nav_login" method="post" data-aos="fade-up" data-aos-delay="400">
       <input type="email" name="email" placeholder="Enter your email" aria-label="Email for newsletter" required>
       <button type="submit">Subscribe</button>
     </form>
@@ -833,7 +833,7 @@
 <section id="contact" style="padding: 80px 16px; background-color: #2f4f4f;">
   <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
     <h2 style="font-size: 36px; font-weight: bold; margin-bottom: 24px; color: #fff;" data-aos="fade-up">Contact Us</h2>
-    <p style="font-size: 18px; color: #fff; max-width: 800px; margin: 0 auto 32px;" data-aos="fade-up" data-aos-delay="200">We’re here to help! Whether you have questions about our attendance system, admissions, or campus life, our team is ready to assist you. Reach out via email, phone, or visit us in person.</p>
+    <p style="font-size: 18px; color: #fff; max-width: 800px; margin: 0 auto 32px;" data-aos="fade-up" data-aos-delay="200">We're here to help! Whether you have questions about our attendance system, admissions, or campus life, our team is ready to assist you. Reach out via email, phone, or visit us in person.</p>
     <div class="note" style="max-width: 800px; margin: 0 auto 32px; background-color: rgba(255, 255, 255, 0.1); color: #fff;" data-aos="fade-up" data-aos-delay="250">Tip: For the fastest response, email us or call during business hours (9 AM - 5 PM, Monday to Friday).</div>
     <a href="mailto:info@itahariinternationalcollege.edu" style="background-color: #ffd700; color: #1e90ff; padding: 12px 24px; border-radius: 9999px; font-weight: 600; text-decoration: none;" data-aos="zoom-in" data-aos-delay="400">Email Us</a>
   </div>

@@ -1,9 +1,14 @@
 package Servlet.login_reg;
 
-import jakarta.servlet.*;
-import jakarta.servlet.http.*;
-import jakarta.servlet.annotation.*;
 import java.io.IOException;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/logout")
 public class LogoutServlet extends HttpServlet {
@@ -25,6 +30,6 @@ public class LogoutServlet extends HttpServlet {
             }
         }
 
-        response.sendRedirect("login?logout=true");
+        response.sendRedirect(request.getContextPath() + "/index.jsp");
     }
 }

@@ -519,8 +519,8 @@
     <div class="id-card" data-aos="fade-up" id="profile">
         <div class="id-photo">
             <% if (student != null && student.getPhotoPath() != null && !student.getPhotoPath().isEmpty()) { %>
-            <img src="${pageContext.request.contextPath}/Uploads/<%= student.getPhotoPath() %>" alt="Student Photo"
-                 onerror="console.error('Failed to load image: ${pageContext.request.contextPath}/Uploads/<%= student.getPhotoPath() %>'); this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <img src="${pageContext.request.contextPath}/Images/<%= student.getPhotoPath() %>" alt="Student Photo"
+                 onerror="console.error('Failed to load image: ${pageContext.request.contextPath}/Images/<%= student.getPhotoPath() %>'); this.style.display='none'; this.nextElementSibling.style.display='block';">
             <% } %>
             <div class="id-photo-placeholder" <%= (student != null && student.getPhotoPath() != null && !student.getPhotoPath().isEmpty()) ? "style='display: none;'" : "" %>>No Photo</div>
         </div>

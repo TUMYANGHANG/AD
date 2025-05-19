@@ -1,9 +1,9 @@
 package model;
 
-
 public class Teacher extends User {
     private String employeeId;
     private String department;
+    private String photoPath;
 
     // Getters and setters
     public String getEmployeeId() {
@@ -20,5 +20,17 @@ public class Teacher extends User {
 
     public void setDepartment(String department) {
         this.department = department;
+    }
+
+    public String getPhotoPath() {
+        return photoPath;
+    }
+
+    public void setPhotoPath(String photoPath) {
+        this.photoPath = photoPath;
+    }
+
+    public String getPhoto() {
+        return getPhotoPath();
     }
 }

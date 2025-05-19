@@ -31,5 +31,11 @@ CREATE TABLE IF NOT EXISTS teacher (
                                        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-# -- Add photo_path column to existing student table (if not included in creation)
-# ALTER TABLE student ADD COLUMN photo_path VARCHAR(255) DEFAULT NULL;
+-- Create notifications table
+CREATE TABLE IF NOT EXISTS notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    type VARCHAR(50) NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    message VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

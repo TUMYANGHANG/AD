@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="java.util.*, java.text.SimpleDateFormat, model.User, dao.UserDAO, java.sql.SQLException" %>
+<%@ page import="java.util.*, java.text.SimpleDateFormat, model.User, model.Student, model.Teacher, dao.UserDAO, java.sql.SQLException" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%
   // Session check to ensure only authenticated admins access the dashboard
   User user = (User) session.getAttribute("user");
@@ -17,11 +18,6 @@
   } catch (Exception e) {
     // Log error and set admin to null
     java.util.logging.Logger.getLogger("AdminDashboard").log(java.util.logging.Level.SEVERE, "Error fetching admin data", e);
-  }
-
-  // Check if admin data is available
-  if (admin == null) {
-    request.setAttribute("error", "Unable to load admin profile. Please contact support.");
   }
 
   // Handle success message for user management actions
@@ -61,10 +57,20 @@
   );
   request.setAttribute("notifications", notifications);
 
+  // Get dashboard data
+  Map<String, Object> stats = (Map<String, Object>) request.getAttribute("stats");
+  List<Student> students = (List<Student>) request.getAttribute("students");
+  List<Teacher> teachers = (List<Teacher>) request.getAttribute("teachers");
+  List<User> recentRegistrations = stats != null ? (List<User>) stats.get("recentRegistrations") : new ArrayList<>();
+
   // Current date
   SimpleDateFormat sdf = new SimpleDateFormat("MMMM dd, yyyy");
   String currentDate = sdf.format(new Date());
-  request.setAttribute("currentDate", currentDate);
+
+  // Initialize default values if stats is null
+  int totalStudents = stats != null ? (int) stats.get("totalStudents") : 0;
+  int totalTeachers = stats != null ? (int) stats.get("totalTeachers") : 0;
+  double averageAttendance = stats != null ? (double) stats.get("averageAttendance") : 0.0;
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -77,33 +83,170 @@
   <title>Admin Dashboard - Itahari International College</title>
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="${pageContext.request.contextPath}/favicon.png">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <!-- AOS Animation Library -->
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-  <!-- Font Awesome for Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Google Fonts for Arial (as used in homepage) -->
   <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;700&display=swap" rel="stylesheet">
   <style>
+    /* Navbar Styles */
+    .navbar {
+        background-color: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 1rem 0;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        height: 70px;
+        display: flex;
+        align-items: center;
+    }
+
+    .navbar-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+
+    .navbar-brand {
+        color: #4a90e2;
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        height: 100%;
+        padding: 0.5rem 0;
+    }
+
+    .navbar-brand i {
+        font-size: 1.8rem;
+    }
+
+    .navbar-nav {
+        display: flex;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        gap: 1.5rem;
+        height: 100%;
+        align-items: center;
+    }
+
+    .nav-item {
+        position: relative;
+        height: 100%;
+        display: flex;
+        align-items: center;
+    }
+
+    .nav-link {
+        color: #2c3e50;
+        text-decoration: none;
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: color 0.3s ease;
+        height: 100%;
+        line-height: 1;
+    }
+
+    .nav-link:hover {
+        color: #4a90e2;
+    }
+
+    .nav-link.active {
+        color: #4a90e2;
+        font-weight: 500;
+    }
+
+    .nav-link i {
+        font-size: 1.1rem;
+    }
+
+    .navbar-toggler {
+        display: none;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.5rem;
+    }
+
+    .navbar-toggler-icon {
+        display: block;
+        width: 25px;
+        height: 2px;
+        background-color: #2c3e50;
+        position: relative;
+        transition: background-color 0.3s ease;
+    }
+
+    .navbar-toggler-icon::before,
+    .navbar-toggler-icon::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-color: #2c3e50;
+        transition: transform 0.3s ease;
+    }
+
+    .navbar-toggler-icon::before {
+        transform: translateY(-8px);
+    }
+
+    .navbar-toggler-icon::after {
+        transform: translateY(8px);
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .navbar-toggler {
+            display: block;
+        }
+
+        .navbar-collapse {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .navbar-collapse.show {
+            display: block;
+        }
+
+        .navbar-nav {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-link {
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+        }
+
+        .nav-link:hover {
+            background-color: #f8f9fa;
+        }
+    }
+
     body {
       font-family: Arial, sans-serif;
-      margin: 0;
+      margin: 0 !important;
       padding: 0;
       line-height: 1.6;
       background-color: #f5f5f5;
-    }
-
-    .navbar {
-      transition: all 0.3s ease;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      z-index: 50;
-    }
-
-    .navbar.scrolled {
-      background-color: rgba(255, 255, 255, 0.95);
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
     .card {
@@ -387,23 +530,143 @@
         justify-content: center;
       }
     }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    
+    .stat-card i {
+      font-size: 2em;
+      color: #1e90ff;
+      margin-bottom: 10px;
+    }
+    
+    .stat-card h3 {
+      font-size: 1.5em;
+      margin: 10px 0;
+      color: #2f4f4f;
+    }
+    
+    .stat-card p {
+      color: #666;
+      margin: 0;
+    }
+    
+    .recent-registrations {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    
+    .recent-registrations h2 {
+      color: #1e90ff;
+      margin-bottom: 20px;
+    }
+    
+    .registration-list {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .registration-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .registration-item:last-child {
+      border-bottom: none;
+    }
+    
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .action-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    
+    .action-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .action-card i {
+      font-size: 2em;
+      color: #1e90ff;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
-<!-- Navbar -->
-<nav class="navbar" style="background-color: #fff;" data-aos="fade-down">
-  <div style="max-width: 1200px; margin: 0 auto; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
-    <div style="font-size: 24px; font-weight: bold; color: #1e90ff;">Itahari International College</div>
-    <div style="display: flex; gap: 24px;">
-      <a href="#home" style="color: #4B5563; text-decoration: none; font-size: 16px;">Home</a>
-      <a href="#users" style="color: #4B5563; text-decoration: none; font-size: 16px;">Users</a>
-      <a href="#reports" style="color: #4B5563; text-decoration: none; font-size: 16px;">Reports</a>
-      <a href="#notifications" style="color: #4B5563; text-decoration: none; font-size: 16px;">Notifications</a>
-      <a href="#settings" style="color: #4B5563; text-decoration: none; font-size: 16px;">Settings</a>
-      <a href="${pageContext.request.contextPath}/logout" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px;">Logout</a>
-    </div>
-  </div>
-</nav>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a class="navbar-brand" href="${pageContext.request.contextPath}/admin">
+                <i class="fas fa-graduation-cap"></i> Admin Dashboard
+            </a>
+            <div style="flex:1;"></div>
+            <div class="navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav" style="margin-left:auto;">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="${pageContext.request.contextPath}/admin">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/admin/users">
+                            <i class="fas fa-users"></i> Users
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/admin/records">
+                            <i class="fas fa-table"></i> Records
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" href="${pageContext.request.contextPath}/admin/notifications">
+                          <i class="fas fa-bell"></i> Notifications
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/admin/settings">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/logout">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
 <!-- Hero Section -->
 <section id="home" class="hero-bg" data-aos="fade-up" data-aos-duration="1200">
@@ -425,11 +688,6 @@
       <%= request.getAttribute("successMessage") %>
     </div>
     <% } %>
-    <% if (request.getAttribute("error") != null) { %>
-    <div class="note" style="background-color: #fee2e2; border-left: 4px solid #ef4444; color: #991b1b;" data-aos="fade-up">
-      <%= request.getAttribute("error") %>
-    </div>
-    <% } %>
 
     <!-- Profile Section -->
     <div class="profile-card" data-aos="fade-up" data-aos-duration="1000">
@@ -448,8 +706,7 @@
         <div><strong>Email:</strong> <%= user.getEmail() %></div>
       </div>
       <div class="profile-actions">
-        <a href="${pageContext.request.contextPath}/upload_Photo" class="cta-button" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px;"><i class="fas fa-upload"></i> Upload Photo</a>
-        <a href="${pageContext.request.contextPath}/editProfile" class="cta-button" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px;"><i class="fas fa-edit"></i> Edit Profile</a>
+        <a href="${pageContext.request.contextPath}/admin/settings" class="cta-button" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px;"><i class="fas fa-edit"></i> Edit Profile</a>
       </div>
     </div>
 
@@ -461,19 +718,31 @@
       <div class="card" style="background-color: #f0f8ff; padding: 24px; border-radius: 8px;" data-aos="flip-left" data-aos-duration="800" id="users">
         <h3 style="font-size: 24px; font-weight: 600; margin-bottom: 16px; color: #1e90ff;"><i class="fas fa-users"></i> User Management</h3>
         <ul class="user-list">
-          <%
+          <% 
             List<Map<String, String>> users = (List<Map<String, String>>) request.getAttribute("userList");
+            // Filter out admin users
+            List<Map<String, String>> filteredUsers = new ArrayList<>();
             for (Map<String, String> userItem : users) {
+              if (!"admin".equalsIgnoreCase(userItem.get("role"))) {
+                filteredUsers.add(userItem);
+              }
+            }
+            // Show only the first two users
+            int showCount = Math.min(filteredUsers.size(), 2);
+            if (showCount > 0) {
+              for (int i = 0; i < showCount; i++) {
+                Map<String, String> userItem = filteredUsers.get(i);
           %>
           <li>
-            <span><strong><%= userItem.get("username") %></strong> (<%= userItem.get("role") %>)</span>
+            <span><strong><%= userItem.get("username") %></strong></span>
             <span><%= userItem.get("status") %></span>
           </li>
-          <%
-            }
+          <% 
+              }
+            } 
           %>
         </ul>
-        <a href="${pageContext.request.contextPath}/manageUsers" class="cta-button" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px; margin-top: 16px; display: inline-block;"><i class="fas fa-eye"></i> Manage Users</a>
+        <a href="${pageContext.request.contextPath}/admin/users" class="cta-button" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px; margin-top: 16px; display: inline-block;"><i class="fas fa-eye"></i> Manage Users</a>
       </div>
 
       <!-- Attendance Reports -->
@@ -487,14 +756,15 @@
           <span><%= attendanceReport.get("averageAttendance") %>%</span>
         </div>
         <p style="text-align: center; margin: 10px 0; font-size: 16px; color: #4B5563;"><%= attendanceReport.get("totalStudents") %> students, <%= attendanceReport.get("classesToday") %> classes today</p>
-        <a href="${pageContext.request.contextPath}/fullReports" class="cta-button" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px; margin-top: 16px; display: inline-block;"><i class="fas fa-file-alt"></i> View Reports</a>
+        <a href="${pageContext.request.contextPath}/admin/reports" class="cta-button" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px; margin-top: 16px; display: inline-block;"><i class="fas fa-file-alt"></i> View Reports</a>
       </div>
 
       <!-- Notifications -->
       <div class="card" style="background-color: #f0f8ff; padding: 24px; border-radius: 8px;" data-aos="flip-left" data-aos-duration="800" data-aos-delay="400" id="notifications">
         <h3 style="font-size: 24px; font-weight: 600; margin-bottom: 16px; color: #1e90ff; cursor: pointer;" onclick="toggleNotifications()"><i class="fas fa-bell"></i> Notifications <i class="fas fa-chevron-down" id="notif-icon"></i></h3>
+        <button class="btn btn-primary" style="margin-bottom: 16px; background: #4a90e2; color: #fff; border: none; border-radius: 5px; padding: 8px 18px; font-size: 1rem; font-weight: 500; cursor: pointer;" onclick="showNotificationModal()"><i class="fas fa-plus"></i> Add Notification</button>
         <div class="notification-panel" id="notification-panel">
-          <ul class="notification-list">
+          <ul class="notification-list" id="notification-list">
             <%
               List<String> notifs = (List<String>) request.getAttribute("notifications");
               for (String notification : notifs) {
@@ -505,7 +775,7 @@
             %>
           </ul>
         </div>
-        <a href="${pageContext.request.contextPath}/allNotifications" class="cta-button" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px; margin-top: 16px; display: inline-block;"><i class="fas fa-bell"></i> View All</a>
+        <a href="${pageContext.request.contextPath}/admin/notifications" class="cta-button" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px; margin-top: 16px; display: inline-block;"><i class="fas fa-bell"></i> View All</a>
       </div>
     </div>
   </div>
@@ -543,18 +813,6 @@
   AOS.init();
 </script>
 
-<!-- Navbar Scroll Effect -->
-<script>
-  window.addEventListener('scroll', () => {
-    const navbar = document.querySelector('.navbar');
-    if (window.scrollY > 50) {
-      navbar.classList.add('scrolled');
-    } else {
-      navbar.classList.remove('scrolled');
-    }
-  });
-</script>
-
 <!-- Toggle Notifications -->
 <script>
   function toggleNotifications() {
@@ -564,6 +822,69 @@
     icon.classList.toggle('fa-chevron-down');
     icon.classList.toggle('fa-chevron-up');
   }
+</script>
+
+<!-- Toggle Navbar -->
+<script>
+    function toggleNavbar() {
+        const navbarCollapse = document.querySelector('.navbar-collapse');
+        navbarCollapse.classList.toggle('show');
+    }
+
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', function(event) {
+        const navbarCollapse = document.querySelector('.navbar-collapse');
+        const navbarToggler = document.querySelector('.navbar-toggler');
+        
+        if (!navbarCollapse.contains(event.target) && !navbarToggler.contains(event.target)) {
+            navbarCollapse.classList.remove('show');
+        }
+    });
+</script>
+
+<!-- Add Notification Modal -->
+<div id="notificationModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:2000; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:10px; padding:32px 24px; max-width:400px; margin:auto; position:relative;">
+    <h3 style="margin-bottom:18px; color:#1e90ff; font-weight:600;">Add Notification</h3>
+    <form id="addNotificationForm" action="${pageContext.request.contextPath}/admin/notifications" method="post">
+      <input type="hidden" name="action" value="create">
+      <div style="margin-bottom:14px;">
+        <label for="notifType" style="font-weight:500;">Topic</label>
+        <select id="notifType" name="type" required style="width:100%; padding:8px; border-radius:5px; border:1px solid #ddd;">
+          <option value="attendance">Attendance</option>
+          <option value="user">User Management</option>
+          <option value="system">System</option>
+        </select>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label for="notifTitle" style="font-weight:500;">Title</label>
+        <input type="text" id="notifTitle" name="title" required maxlength="100" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ddd;">
+      </div>
+      <div style="margin-bottom:14px;">
+        <label for="notifDesc" style="font-weight:500;">Short Description</label>
+        <input type="text" id="notifDesc" name="message" required maxlength="100" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ddd;">
+      </div>
+      <div style="margin-bottom:18px;">
+        <label style="font-weight:500;">Posted Time</label>
+        <input type="text" id="notifTime" readonly style="width:100%; padding:8px; border-radius:5px; border:1px solid #ddd; background:#f5f5f5;">
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" onclick="hideNotificationModal()" style="background:#ccc; color:#222; border:none; border-radius:5px; padding:8px 16px;">Cancel</button>
+        <button type="submit" style="background:#1e90ff; color:#fff; border:none; border-radius:5px; padding:8px 16px;">Add</button>
+      </div>
+    </form>
+    <button onclick="hideNotificationModal()" style="position:absolute; top:10px; right:14px; background:none; border:none; font-size:20px; color:#888; cursor:pointer;">&times;</button>
+  </div>
+</div>
+
+<script>
+function showNotificationModal() {
+  document.getElementById('notificationModal').style.display = 'flex';
+  document.getElementById('notifTime').value = new Date().toLocaleString();
+}
+function hideNotificationModal() {
+  document.getElementById('notificationModal').style.display = 'none';
+}
 </script>
 </body>
 </html>

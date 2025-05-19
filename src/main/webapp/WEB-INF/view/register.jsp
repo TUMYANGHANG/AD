@@ -300,70 +300,81 @@
             <a href="index.jsp" style="color: #4B5563; text-decoration: none; font-size: 16px;">Home</a>
             <a href="#about" style="color: #4B5563; text-decoration: none; font-size: 16px;">About</a>
             <a href="#contact" style="color: #4B5563; text-decoration: none; font-size: 16px;">Contact</a>
-            <a href="LoginnavServlet" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px;">Login</a>
+            <a href="${pageContext.request.contextPath}/Nav_login" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px;">Login</a>
         </div>
     </div>
 </nav>
 
 <!-- Main Form -->
 <div class="form-container" data-aos="fade-up" data-aos-duration="1000">
-    <h1>User Registration</h1>
-    <p>Create your account to access the Student Attendance Management System.</p>
-    <div class="note" data-aos="fade-up" data-aos-delay="100">
-        Select your role to provide additional details specific to your account type.
-    </div>
-
-    <!-- Error Message -->
-    <% String error = (String) request.getAttribute("error"); %>
-    <% if (error != null && !error.isEmpty()) { %>
-    <div class="note error" data-aos="fade-up" data-aos-delay="150"><%= error %></div>
+    <h1>Create Account</h1>
+    <p>Join our community and start managing attendance efficiently</p>
+    
+    <% if (request.getAttribute("error") != null) { %>
+        <div class="note error"><%= request.getAttribute("error") %></div>
     <% } %>
 
-    <!-- Registration Form -->
-    <form action="${pageContext.request.contextPath}/register" method="post" onsubmit="return validateForm()">
-        <!-- Role Selection -->
-        <label for="role">Role:</label>
-        <select name="role" id="role" onchange="updateForm()" required aria-label="Select your role">
-            <option value="">Select Role</option>
-            <option value="admin">Admin</option>
-            <option value="student">Student</option>
-            <option value="teacher">Teacher</option>
-        </select>
-
-        <!-- Common Fields -->
-        <label for="username">Username:</label>
-        <input type="text" name="username" id="username" required placeholder="Enter your username" aria-label="Username">
-
-        <label for="email">Email:</label>
-        <input type="email" name="email" id="email" required placeholder="Enter your email" aria-label="Email">
-
-        <label for="password">Password:</label>
-        <input type="password" name="password" id="password" required placeholder="Enter your password" aria-label="Password">
-
-        <label for="confirmPassword">Confirm Password:</label>
-        <input type="password" name="confirmPassword" id="confirmPassword" required placeholder="Confirm your password" aria-label="Confirm Password">
-
-        <!-- Student Specific Fields -->
-        <div id="studentFields" style="display: none;">
-            <label for="rollno">Roll Number:</label>
-            <input type="text" name="rollno" id="rollno" placeholder="Enter your roll number" aria-label="Roll Number">
-
-            <label for="classname">Class Name:</label>
-            <input type="text" name="classname" id="classname" placeholder="Enter your class name" aria-label="Class Name">
+    <form action="${pageContext.request.contextPath}/Nav_register_process" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required>
         </div>
 
-        <!-- Teacher Specific Fields -->
-        <div id="teacherFields" style="display: none;">
-            <label for="employeeID">Employee ID:</label>
-            <input type="text" name="employeeID" id="employeeID" placeholder="Enter your employee ID" aria-label="Employee ID">
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required>
+        </div>
 
-            <label for="department">Department:</label>
-            <input type="text" name="department" id="department" placeholder="Enter your department" aria-label="Department">
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+
+        <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" required>
+        </div>
+
+        <div class="form-group">
+            <label for="role">Role</label>
+            <select id="role" name="role" required onchange="showRoleFields()">
+                <option value="">Select your role</option>
+                <option value="student">Student</option>
+                <option value="teacher">Teacher</option>
+                <option value="admin">Admin</option>
+            </select>
+        </div>
+
+        <div id="studentFields" style="display: none;">
+            <div class="form-group">
+                <label for="rollno">Roll Number</label>
+                <input type="text" id="rollno" name="rollno">
+            </div>
+            <div class="form-group">
+                <label for="classname">Class</label>
+                <input type="text" id="classname" name="classname">
+            </div>
+        </div>
+
+        <div id="teacherFields" style="display: none;">
+            <div class="form-group">
+                <label for="employeeID">Employee ID</label>
+                <input type="text" id="employeeID" name="employeeID">
+            </div>
+            <div class="form-group">
+                <label for="department">Department</label>
+                <input type="text" id="department" name="department">
+            </div>
+            <div class="form-group">
+                <label for="photo">Photo</label>
+                <input type="file" id="photo" name="photo" accept="image/*">
+            </div>
         </div>
 
         <input type="submit" value="Register">
-        <a href="index.jsp" class="back-link">Back to Home</a>
     </form>
+
+    <a href="${pageContext.request.contextPath}/Nav_login" class="back-link">Already have an account? Login here</a>
 </div>
 
 <!-- Footer -->
@@ -408,6 +419,14 @@
             navbar.classList.remove('scrolled');
         }
     });
+</script>
+
+<script>
+    function showRoleFields() {
+        var role = document.getElementById('role').value;
+        document.getElementById('studentFields').style.display = role === 'student' ? 'block' : 'none';
+        document.getElementById('teacherFields').style.display = role === 'teacher' ? 'block' : 'none';
+    }
 </script>
 </body>
 </html>

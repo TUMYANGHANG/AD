@@ -11,10 +11,11 @@ import java.util.Arrays;
 import java.util.logging.*;
 
 @WebServlet("/upload_photo")
-@MultipartConfig(fileSizeThreshold=1024*1024, maxFileSize=1024*1024*5, maxRequestSize=1024*1024*5*5)
+@MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = 1024 * 1024 * 5, maxRequestSize = 1024 * 1024 * 5 * 5)
 public class UploadPhotoServlet extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(UploadPhotoServlet.class.getName());
-    private static final String PERSISTENT_UPLOAD_DIR = "C:" + File.separator + "webapp" + File.separator + "Uploads" + File.separator + "students" + File.separator;
+    private static final String UPLOAD_SUBDIR = "Images" + File.separator;
+    private static final String SOURCE_IMAGES_DIR = "M:\\Advanced Programming\\apt-cw\\src\\main\\webapp\\Images\\";
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -71,18 +72,35 @@ public class UploadPhotoServlet extends HttpServlet {
             return;
         }
 
-        String persistentUploadPath = PERSISTENT_UPLOAD_DIR;
+        // Get the real path to the Images directory
+        String persistentUploadPath = getServletContext().getRealPath("/") + UPLOAD_SUBDIR;
+        LOGGER.info("Calculated upload path: " + persistentUploadPath);
+
         File persistentUploadDir = new File(persistentUploadPath);
         if (!persistentUploadDir.exists()) {
-            if (!persistentUploadDir.mkdirs()) {
-                LOGGER.severe("Failed to create persistent upload directory: " + persistentUploadPath + "; check parent directory permissions");
-                request.setAttribute("error", "Server error: Unable to create upload directory.");
-                request.getRequestDispatcher("/WEB-INF/view/student_dashboard_functionality_works/upload_photo.jsp").forward(request, response);
+            try {
+                if (!persistentUploadDir.mkdirs()) {
+                    LOGGER.severe("Failed to create upload directory: " + persistentUploadPath +
+                            "; check parent directory permissions and path validity");
+                    request.setAttribute("error", "Server error: Unable to create upload directory.");
+                    request.getRequestDispatcher("/WEB-INF/view/student_dashboard_functionality_works/upload_photo.jsp")
+                            .forward(request, response);
+                    return;
+                } else {
+                    LOGGER.info("Created upload directory: " + persistentUploadPath);
+                }
+            } catch (SecurityException e) {
+                LOGGER.severe("Security exception while creating upload directory: " + persistentUploadPath +
+                        "; cause: " + e.getMessage());
+                request.setAttribute("error", "Server error: Permission denied while creating upload directory.");
+                request.getRequestDispatcher("/WEB-INF/view/student_dashboard_functionality_works/upload_photo.jsp")
+                        .forward(request, response);
+                return;
             }
         }
 
         if (!persistentUploadDir.canWrite()) {
-            LOGGER.severe("Persistent upload directory is not writable: " + persistentUploadPath);
+            LOGGER.severe("Upload directory is not writable: " + persistentUploadPath);
             request.setAttribute("error", "Server error: Upload directory is not writable.");
             request.getRequestDispatcher("/WEB-INF/view/student_dashboard_functionality_works/upload_photo.jsp").forward(request, response);
             return;
@@ -93,14 +111,24 @@ public class UploadPhotoServlet extends HttpServlet {
         try {
             filePart.write(persistentFilePath);
             LOGGER.info("File uploaded successfully to: " + persistentFilePath);
+
+            // Copy to source directory for development visibility
+            String sourcePath = SOURCE_IMAGES_DIR + fileName;
+            try {
+                Files.copy(Paths.get(persistentFilePath), Paths.get(sourcePath), StandardCopyOption.REPLACE_EXISTING);
+                LOGGER.info("Copied file to source directory: " + sourcePath);
+            } catch (IOException e) {
+                LOGGER.warning("Failed to copy file to source directory: " + sourcePath + "; cause: " + e.getMessage());
+            }
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Failed to save file to persistent path for user ID: " + user.getId() + " at path: " + persistentFilePath + "; cause: " + e.getMessage(), e);
+            LOGGER.log(Level.SEVERE, "Failed to save file to persistent path for user ID: " + user.getId() +
+                    " at path: " + persistentFilePath + "; cause: " + e.getMessage(), e);
             request.setAttribute("error", "Failed to upload file due to server error: " + e.getMessage());
             request.getRequestDispatcher("/WEB-INF/view/student_dashboard_functionality_works/upload_photo.jsp").forward(request, response);
             return;
         }
 
-        String relativePath = "students/" + fileName;
+        String relativePath = fileName; // Save only the filename in the database
         try {
             StudentDAO studentDAO = new StudentDAO();
             studentDAO.updatePhotoPath(user.getId(), relativePath);

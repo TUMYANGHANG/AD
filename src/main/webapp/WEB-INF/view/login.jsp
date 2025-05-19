@@ -257,64 +257,30 @@
 
 <!-- Main Content -->
 <main class="main-container" style="flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem;">
-    <div class="login-card" data-aos="fade-up" data-aos-duration="1000">
-        <div class="login-header" style="text-align: center; margin-bottom: 2rem;">
-            <h2 style="color: #1e90ff; margin-bottom: 0.5rem; font-size: 28px; font-weight: bold;">Welcome Back</h2>
-            <p style="color: #4B5563; font-size: 16px;">Please login to access your account</p>
-        </div>
-
-        <!-- Success Message -->
-        <%
-            if (successMessage != null) {
-        %>
-        <div class="note success" data-aos="fade-up" data-aos-delay="100">
-            <%= successMessage %>
-        </div>
-        <%
-            }
-        %>
-
-        <!-- Error Message -->
-        <%
-            if (errorMessage != null) {
-        %>
-        <div class="note error" data-aos="fade-up" data-aos-delay="100">
-            <%= errorMessage %>
-        </div>
-        <%
-            }
-        %>
-
-        <form action="${pageContext.request.contextPath}/login" method="post">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" class="form-control" required placeholder="Enter your username">
-            </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-                <div style="position: relative;">
-                    <input type="password" id="password" name="password" class="form-control" required placeholder="Enter your password">
-                    <i class="fas fa-eye toggle-password" onclick="togglePassword('password')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #4B5563;"></i>
+    <div class="container">
+        <div class="login-card">
+            <h2>Login</h2>
+            <% if (successMessage != null) { %>
+                <div class="note success"><%= successMessage %></div>
+            <% } %>
+            <% if (errorMessage != null) { %>
+                <div class="note error"><%= errorMessage %></div>
+            <% } %>
+            <form action="${pageContext.request.contextPath}/Nav_login_process" method="post">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-control" required>
                 </div>
-            </div>
-
-            <div class="form-group">
-                <label for="role">Role</label>
-                <select id="role" name="role" class="form-control" required>
-                    <option value="">Select your role</option>
-                    <option value="admin">Admin</option>
-                    <option value="student">Student</option>
-                    <option value="teacher">Teacher</option>
-                </select>
-            </div>
-
-            <button type="submit" class="btn" id="submitButton">Login</button>
-
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn">Login</button>
+            </form>
             <div class="register-link">
-                Don't have an account? <a href="${pageContext.request.contextPath}/register">Register here</a>
+                Don't have an account? <a href="${pageContext.request.contextPath}/Nav_register">Register here</a>
             </div>
-        </form>
+        </div>
     </div>
 </main>
 

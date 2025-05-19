@@ -1,4 +1,4 @@
-package Servlet.Dashboards;
+package Servlet.teacherdashboard;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
