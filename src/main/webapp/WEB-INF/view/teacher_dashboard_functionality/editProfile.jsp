@@ -346,7 +346,6 @@
         <li><a href="${pageContext.request.contextPath}/teacher-dash"><i class="fas fa-home"></i> Dashboard</a></li>
         <li><a href="${pageContext.request.contextPath}/students"><i class="fas fa-users"></i> Students</a></li>
         <li><a href="${pageContext.request.contextPath}/manageAttendance"><i class="fas fa-clipboard-check"></i> Attendance</a></li>
-        <li><a href="${pageContext.request.contextPath}/fullSchedule"><i class="fas fa-calendar-alt"></i> Schedule</a></li>
         <li><a href="${pageContext.request.contextPath}/sendNotification"><i class="fas fa-bell"></i> Notifications</a></li>
         <li><a href="${pageContext.request.contextPath}/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
     </ul>

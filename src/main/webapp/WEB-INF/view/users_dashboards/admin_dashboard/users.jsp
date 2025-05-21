@@ -312,12 +312,6 @@
                             <i class="fas fa-users"></i> Users
                         </a>
                     </li>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="${pageContext.request.contextPath}/admin/records">
-                            <i class="fas fa-table"></i> Records
-                        </a>
-                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="${pageContext.request.contextPath}/admin/notifications">
                             <i class="fas fa-bell"></i> Notifications

@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.io.*, java.text.SimpleDateFormat, java.util.Date" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%
     // File handling for error logging
     String logFilePath = application.getRealPath("/WEB-INF/logs/error.log");
@@ -226,6 +227,59 @@
                 gap: 12px;
             }
         }
+
+        /* Popup notification styles */
+        .popup {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 5px;
+            color: white;
+            font-weight: 500;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .popup.success {
+            background-color: #4CAF50;
+        }
+
+        .popup.error {
+            background-color: #f44336;
+        }
+
+        .popup i {
+            margin-right: 10px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .popup.hide {
+            animation: slideOut 0.5s ease-out forwards;
+        }
     </style>
 </head>
 <body>
@@ -255,6 +309,12 @@
     </div>
 </nav>
 
+<!-- Popup notification -->
+<div id="popup" class="popup">
+    <i class="fas"></i>
+    <span id="popup-message"></span>
+</div>
+
 <!-- Main Content -->
 <main class="main-container" style="flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem;">
     <div class="container">
@@ -266,10 +326,10 @@
             <% if (errorMessage != null) { %>
                 <div class="note error"><%= errorMessage %></div>
             <% } %>
-            <form action="${pageContext.request.contextPath}/Nav_login_process" method="post">
+            <form action="${pageContext.request.contextPath}/login" method="post">
                 <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" class="form-control" required>
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" class="form-control" required>
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
@@ -332,5 +392,51 @@
         button.disabled = true;
     });
 </script>
+
+<!-- Add this before the closing body tag -->
+<script>
+    function showPopup(message, type) {
+        const popup = document.getElementById('popup');
+        const popupMessage = document.getElementById('popup-message');
+        const icon = popup.querySelector('i');
+
+        // Set message and type
+        popupMessage.textContent = message;
+        popup.className = 'popup ' + type;
+        
+        // Set icon based on type
+        if (type === 'success') {
+            icon.className = 'fas fa-check-circle';
+        } else {
+            icon.className = 'fas fa-exclamation-circle';
+        }
+
+        // Show popup
+        popup.style.display = 'block';
+
+        // Hide popup after 5 seconds
+        setTimeout(() => {
+            popup.classList.add('hide');
+            setTimeout(() => {
+                popup.style.display = 'none';
+                popup.classList.remove('hide');
+            }, 500);
+        }, 5000);
+    }
+
+    // Check for messages on page load
+    window.onload = function() {
+        <c:if test="${not empty success}">
+            showPopup('${success}', 'success');
+        </c:if>
+        <c:if test="${not empty error}">
+            showPopup('${error}', 'error');
+        </c:if>
+    };
+</script>
+
+<!-- Hidden fields for messages -->
+<input type="hidden" id="success-message" value="${requestScope.success}">
+<input type="hidden" id="error-message" value="${requestScope.error}">
 </body>
 </html>

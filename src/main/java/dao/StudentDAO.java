@@ -213,4 +213,75 @@ public class StudentDAO {
         }
         return success;
     }
+
+    // New method to get student data by user ID
+    public Student getStudentById(int userId) throws SQLException {
+        return getStudentData(userId);
+    }
+
+    // New method to update student data
+    public boolean updateStudent(Student student) throws SQLException {
+        Connection conn = null;
+        PreparedStatement pstmtUser = null;
+        PreparedStatement pstmtStudent = null;
+        boolean success = false;
+
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false);
+
+            // Update users table (username, email, and photo)
+            String sqlUser = "UPDATE users SET username = ?, email = ?, photo = ? WHERE id = ?";
+            pstmtUser = conn.prepareStatement(sqlUser);
+            pstmtUser.setString(1, student.getUsername());
+            pstmtUser.setString(2, student.getEmail());
+            pstmtUser.setString(3, student.getPhotoPath()); // Update photo column in users table
+            pstmtUser.setInt(4, student.getId());
+            pstmtUser.executeUpdate();
+
+            // Update student table (classname only)
+            String sqlStudent = "UPDATE student SET classname = ? WHERE user_id = ?";
+            pstmtStudent = conn.prepareStatement(sqlStudent);
+            pstmtStudent.setString(1, student.getClassName());
+            pstmtStudent.setInt(2, student.getId());
+            pstmtStudent.executeUpdate();
+
+            conn.commit();
+            success = true;
+
+        } catch (SQLException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Failed to rollback transaction during student update", ex);
+                }
+            }
+            logger.log(Level.SEVERE, "Error updating student data for user ID: " + student.getId(), e);
+            throw e;
+        } finally {
+            if (pstmtUser != null) {
+                try {
+                    pstmtUser.close();
+                } catch (SQLException e) {
+                    logger.log(Level.WARNING, "Failed to close pstmtUser", e);
+                }
+            }
+            if (pstmtStudent != null) {
+                try {
+                    pstmtStudent.close();
+                } catch (SQLException e) {
+                    logger.log(Level.WARNING, "Failed to close pstmtStudent", e);
+                }
+            }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    logger.log(Level.WARNING, "Failed to close Connection", e);
+                }
+            }
+        }
+        return success;
+    }
 }

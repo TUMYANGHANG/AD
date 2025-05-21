@@ -1,30 +1,32 @@
 package Servlet.teacherdashboard;
 
-import dao.TeacherDAO;
-import dao.UserDAO;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.MultipartConfig;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
-import model.Teacher;
-import model.User;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import dao.TeacherDAO;
+import dao.UserDAO;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Part;
+import model.Teacher;
+import model.User;
+
 @WebServlet("/EditProfileServlet")
-@MultipartConfig(
-        fileSizeThreshold = 1024 * 1024 * 3, // 3MB
-        maxFileSize = 1024 * 1024 * 5,      // 5MB
-        maxRequestSize = 1024 * 1024 * 10   // 10MB
+@MultipartConfig(fileSizeThreshold = 1024 * 1024 * 3, // 3MB
+        maxFileSize = 1024 * 1024 * 5, // 5MB
+        maxRequestSize = 1024 * 1024 * 10 // 10MB
 )
 public class EditProfileServlet extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(EditProfileServlet.class.getName());
     public static final String UPLOAD_DIR = "Images";
-    private static final String[] ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif"};
+    private static final String[] ALLOWED_EXTENSIONS = { ".jpg", ".jpeg", ".png", ".gif" };
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -36,7 +38,8 @@ public class EditProfileServlet extends HttpServlet {
             return;
         }
         LOGGER.info("Forwarding to editProfile.jsp for user ID: " + user.getId());
-        request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp").forward(request,
+                response);
     }
 
     @Override
@@ -62,7 +65,8 @@ public class EditProfileServlet extends HttpServlet {
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error retrieving photo part for user ID: " + user.getId(), e);
             request.setAttribute("error", "Error processing photo upload.");
-            request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp")
+                    .forward(request, response);
             return;
         }
 
@@ -73,7 +77,8 @@ public class EditProfileServlet extends HttpServlet {
                 employeeID == null || employeeID.trim().isEmpty()) {
             LOGGER.warning("Validation failed for user ID: " + user.getId());
             request.setAttribute("error", "All fields are required and email must be valid.");
-            request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp")
+                    .forward(request, response);
             return;
         }
 
@@ -85,11 +90,13 @@ public class EditProfileServlet extends HttpServlet {
             if (!java.util.Arrays.asList(ALLOWED_EXTENSIONS).contains(extension)) {
                 LOGGER.warning("Invalid file extension for user ID: " + user.getId() + ": " + extension);
                 request.setAttribute("error", "Only image files (.jpg, .jpeg, .png, .gif) are allowed.");
-                request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp")
+                        .forward(request, response);
                 return;
             }
             fileName = UUID.randomUUID() + "_" + fileName;
-            String uploadPath = getServletContext().getRealPath("") + File.separator + UPLOAD_DIR;
+            // Save directly under the web context root's Images directory
+            String uploadPath = getServletContext().getRealPath("/") + UPLOAD_DIR;
             File uploadDir = new File(uploadPath);
             if (!uploadDir.exists()) {
                 try {
@@ -97,7 +104,8 @@ public class EditProfileServlet extends HttpServlet {
                 } catch (SecurityException e) {
                     LOGGER.log(Level.SEVERE, "Failed to create upload directory: " + uploadPath, e);
                     request.setAttribute("error", "Server error: Unable to create upload directory.");
-                    request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp").forward(request, response);
+                    request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp")
+                            .forward(request, response);
                     return;
                 }
             }
@@ -109,7 +117,8 @@ public class EditProfileServlet extends HttpServlet {
             } catch (IOException e) {
                 LOGGER.log(Level.SEVERE, "Failed to write photo to: " + filepath + " for user ID: " + user.getId(), e);
                 request.setAttribute("error", "Error saving uploaded photo.");
-                request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp")
+                        .forward(request, response);
                 return;
             }
         }
@@ -139,7 +148,8 @@ public class EditProfileServlet extends HttpServlet {
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error updating user data for ID: " + user.getId(), e);
             request.setAttribute("error", "Database error: Unable to update user data.");
-            request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp")
+                    .forward(request, response);
             return;
         }
 
@@ -147,11 +157,13 @@ public class EditProfileServlet extends HttpServlet {
         boolean teacherUpdated;
         try {
             teacherUpdated = teacherDAO.saveTeacherData(updatedTeacher, employeeID, department, photoPath);
-            LOGGER.info("Teacher update " + (teacherUpdated ? "successful" : "failed") + " for user ID: " + user.getId());
+            LOGGER.info(
+                    "Teacher update " + (teacherUpdated ? "successful" : "failed") + " for user ID: " + user.getId());
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error updating teacher data for ID: " + user.getId(), e);
             request.setAttribute("error", "Database error: Unable to update teacher data.");
-            request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp")
+                    .forward(request, response);
             return;
         }
 
@@ -164,7 +176,8 @@ public class EditProfileServlet extends HttpServlet {
         } else {
             LOGGER.warning("Profile update failed for user ID: " + user.getId());
             request.setAttribute("error", "Failed to update profile. Please try again.");
-            request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/view/teacher_dashboard_functionality/editProfile.jsp")
+                    .forward(request, response);
         }
     }
 }

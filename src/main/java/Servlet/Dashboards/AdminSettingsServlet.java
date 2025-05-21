@@ -1,6 +1,7 @@
 package Servlet.Dashboards;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -98,13 +99,18 @@ public class AdminSettingsServlet extends HttpServlet {
         updated = true;
       }
     }
-    if (updated) {
-      // Reload the latest user from DB and update session
-      User updatedUser = userDAO.getUserById(user.getId());
-      request.getSession().setAttribute("user", updatedUser);
-      response.sendRedirect(request.getContextPath() + "/admin/settings?success=profile_updated");
-    } else {
-      response.sendRedirect(request.getContextPath() + "/admin/settings?error=invalid_input");
+    try {
+      if (updated) {
+        // Reload the latest user from DB and update session
+        User updatedUser = userDAO.getUserData(user.getId());
+        request.getSession().setAttribute("user", updatedUser);
+        response.sendRedirect(request.getContextPath() + "/admin/settings?success=profile_updated");
+      } else {
+        response.sendRedirect(request.getContextPath() + "/admin/settings?error=update_failed");
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+      response.sendRedirect(request.getContextPath() + "/admin/settings?error=database_error");
     }
   }
 
@@ -113,25 +119,32 @@ public class AdminSettingsServlet extends HttpServlet {
     String newPassword = request.getParameter("newPassword");
     String confirmPassword = request.getParameter("confirmPassword");
 
-    if (currentPassword != null && newPassword != null && confirmPassword != null && newPassword.equals(confirmPassword)) {
-      // Always fetch the latest user from DB
-      User dbUser = userDAO.getUserById(user.getId());
-      if (dbUser != null) {
-        // Authenticate with latest email (since login is by email)
-        User authUser = userDAO.authenticate(dbUser.getEmail(), currentPassword);
-        if (authUser != null) {
-          dbUser.setPassword(newPassword); // Will be hashed in DAO
-          userDAO.updateUser(dbUser);
-          // Reload user from DB and update session
-          User updatedUser = userDAO.getUserById(user.getId());
-          request.getSession().setAttribute("user", updatedUser);
-          response.sendRedirect(request.getContextPath() + "/admin/settings?success=password_updated");
-          return;
+    try {
+      if (currentPassword != null && newPassword != null && confirmPassword != null
+          && newPassword.equals(confirmPassword)) {
+        // Always fetch the latest user from DB
+        User dbUser = userDAO.getUserData(user.getId());
+        if (dbUser != null) {
+          // Authenticate with latest email (since login is by email)
+          if (userDAO.authenticate(dbUser.getEmail(), currentPassword) != null) {
+            dbUser.setPassword(newPassword);
+            userDAO.updateUser(dbUser);
+            // Reload user from DB and update session
+            User updatedUser = userDAO.getUserData(user.getId());
+            request.getSession().setAttribute("user", updatedUser);
+            response.sendRedirect(request.getContextPath() + "/admin/settings?success=password_updated");
+          } else {
+            response.sendRedirect(request.getContextPath() + "/admin/settings?error=invalid_current_password");
+          }
+        } else {
+          response.sendRedirect(request.getContextPath() + "/admin/settings?error=user_not_found");
         }
+      } else {
+        response.sendRedirect(request.getContextPath() + "/admin/settings?error=password_mismatch");
       }
-      response.sendRedirect(request.getContextPath() + "/admin/settings?error=invalid_password");
-    } else {
-      response.sendRedirect(request.getContextPath() + "/admin/settings?error=invalid_input");
+    } catch (SQLException e) {
+      e.printStackTrace();
+      response.sendRedirect(request.getContextPath() + "/admin/settings?error=database_error");
     }
   }
 

@@ -71,6 +71,7 @@
   int totalStudents = stats != null ? (int) stats.get("totalStudents") : 0;
   int totalTeachers = stats != null ? (int) stats.get("totalTeachers") : 0;
   double averageAttendance = stats != null ? (double) stats.get("averageAttendance") : 0.0;
+  int totalClasses = stats != null ? (int) stats.get("classesToday") : 0;
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -251,6 +252,12 @@
 
     .card {
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+      background-color: #f0f8ff;
+      border: 1px solid #b3d9ff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
     }
 
     .card:hover {
@@ -643,11 +650,6 @@
                     </li>
                     
                     <li class="nav-item">
-                        <a class="nav-link" href="${pageContext.request.contextPath}/admin/records">
-                            <i class="fas fa-table"></i> Records
-                        </a>
-                    </li>
-                    <li class="nav-item">
                       <a class="nav-link" href="${pageContext.request.contextPath}/admin/notifications">
                           <i class="fas fa-bell"></i> Notifications
                       </a>
@@ -746,18 +748,23 @@
       </div>
 
       <!-- Attendance Reports -->
-      <div class="card" style="background-color: #f0f8ff; padding: 24px; border-radius: 8px;" data-aos="flip-left" data-aos-duration="800" data-aos-delay="200" id="reports">
-        <h3 style="font-size: 24px; font-weight: 600; margin-bottom: 16px; color: #1e90ff;"><i class="fas fa-chart-bar"></i> Attendance Reports</h3>
-        <div class="progress-circle" data-progress="<%= attendanceReport.get("averageAttendance") %>">
-          <svg width="100" height="100">
-            <circle class="circle-bg" cx="50" cy="50" r="45"></circle>
-            <circle class="circle-fg" cx="50" cy="50" r="45" stroke-dasharray="282.6" stroke-dashoffset="<%=(100 - Integer.parseInt(attendanceReport.get("averageAttendance"))) * 2.826%>"></circle>
-          </svg>
-          <span><%= attendanceReport.get("averageAttendance") %>%</span>
-        </div>
-        <p style="text-align: center; margin: 10px 0; font-size: 16px; color: #4B5563;"><%= attendanceReport.get("totalStudents") %> students, <%= attendanceReport.get("classesToday") %> classes today</p>
-        <a href="${pageContext.request.contextPath}/admin/reports" class="cta-button" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px; margin-top: 16px; display: inline-block;"><i class="fas fa-file-alt"></i> View Reports</a>
-      </div>
+      <div class="card" data-aos="fade-up" data-aos-delay="100">
+                <h2 style="color: #4a90e2; margin-bottom: 16px;"><i class="fas fa-chart-pie"></i> Attendance Reports</h2>
+                <div class="progress-circle" data-progress="<%= averageAttendance %>">
+                    <svg width="120" height="120">
+                        <circle class="circle-bg" cx="60" cy="60" r="50"></circle>
+                        <circle class="circle-fg" cx="60" cy="60" r="50" 
+                                stroke-dasharray="314" 
+                                stroke-dashoffset="<%=(100 - averageAttendance) * 3.14%>"
+                                style="stroke: #4a90e2;"></circle>
+                    </svg>
+                    <span><%= String.format("%.1f", averageAttendance) %> %</span>
+                </div>
+                <p style="color: #4B5563; margin-bottom: 16px; text-align: center;"><%= totalStudents %> students, <%= totalClasses %> classes today</p>
+                <a href="${pageContext.request.contextPath}/admin/reports" class="btn">
+                    <i class="fas fa-file-alt"></i> View Reports
+                </a>
+            </div>
 
       <!-- Notifications -->
       <div class="card" style="background-color: #f0f8ff; padding: 24px; border-radius: 8px;" data-aos="flip-left" data-aos-duration="800" data-aos-delay="400" id="notifications">

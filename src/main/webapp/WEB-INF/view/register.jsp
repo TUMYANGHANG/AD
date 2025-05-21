@@ -5,6 +5,7 @@
   Time: 9:40 PM
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -259,6 +260,59 @@
                 justify-content: center;
             }
         }
+
+        /* Popup notification styles */
+        .popup {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 5px;
+            color: white;
+            font-weight: 500;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .popup.success {
+            background-color: #4CAF50;
+        }
+
+        .popup.error {
+            background-color: #f44336;
+        }
+
+        .popup i {
+            margin-right: 10px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .popup.hide {
+            animation: slideOut 0.5s ease-out forwards;
+        }
     </style>
     <script>
         function updateForm() {
@@ -287,6 +341,34 @@
                 return false;
             }
 
+            // Password complexity checks
+            const minLength = 8;
+            const hasUppercase = /[A-Z]/;
+            const hasLowercase = /[a-z]/;
+            const hasNumber = /[0-9]/;
+            const hasSpecialChar = /[!@#$%^&*()_+[\]{}|;':",.<>?]/; // Added escaping for special characters
+
+            if (password.length < minLength) {
+                alert("Password must be at least " + minLength + " characters long.");
+                return false;
+            }
+            if (!hasUppercase.test(password)) {
+                alert("Password must contain at least one uppercase letter.");
+                return false;
+            }
+            if (!hasLowercase.test(password)) {
+                alert("Password must contain at least one lowercase letter.");
+                return false;
+            }
+            if (!hasNumber.test(password)) {
+                alert("Password must contain at least one number.");
+                return false;
+            }
+            if (!hasSpecialChar.test(password)) {
+                alert("Password must contain at least one special character.");
+                return false;
+            }
+
             return true;
         }
     </script>
@@ -305,6 +387,12 @@
     </div>
 </nav>
 
+<!-- Popup notification -->
+<div id="popup" class="popup">
+    <i class="fas"></i>
+    <span id="popup-message"></span>
+</div>
+
 <!-- Main Form -->
 <div class="form-container" data-aos="fade-up" data-aos-duration="1000">
     <h1>Create Account</h1>
@@ -314,7 +402,7 @@
         <div class="note error"><%= request.getAttribute("error") %></div>
     <% } %>
 
-    <form action="${pageContext.request.contextPath}/Nav_register_process" method="post" enctype="multipart/form-data">
+    <form action="${pageContext.request.contextPath}/Nav_register_process" method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
         <div class="form-group">
             <label for="username">Username</label>
             <input type="text" id="username" name="username" required>
@@ -426,6 +514,96 @@
         var role = document.getElementById('role').value;
         document.getElementById('studentFields').style.display = role === 'student' ? 'block' : 'none';
         document.getElementById('teacherFields').style.display = role === 'teacher' ? 'block' : 'none';
+    }
+</script>
+
+<!-- Add this before the closing body tag -->
+<script>
+    // Function to show popup
+    function showPopup(message, type) {
+        const popup = document.getElementById('popup');
+        const popupMessage = document.getElementById('popup-message');
+        const icon = popup.querySelector('i');
+        
+        // Set message and type
+        popupMessage.textContent = message;
+        popup.className = 'popup ' + type;
+        
+        // Set icon based on type
+        if (type === 'success') {
+            icon.className = 'fas fa-check-circle';
+        } else {
+            icon.className = 'fas fa-exclamation-circle';
+        }
+
+        // Show popup
+        popup.style.display = 'block';
+
+        // Hide popup after 5 seconds
+        setTimeout(function() {
+            popup.classList.add('hide');
+            setTimeout(function() {
+                popup.style.display = 'none';
+                popup.classList.remove('hide');
+            }, 500);
+        }, 5000);
+    }
+
+    // Check for messages on page load
+    window.onload = function() {
+        <c:if test="${not empty success}">
+            showPopup('${success}', 'success');
+        </c:if>
+        <c:if test="${not empty error}">
+            showPopup('${error}', 'error');
+        </c:if>
+    };
+
+    // Form validation
+    function validateForm() {
+        const role = document.getElementById('role').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (!role) {
+            showPopup('Please select a role', 'error');
+            return false;
+        }
+
+        if (password !== confirmPassword) {
+            showPopup('Passwords do not match', 'error');
+            return false;
+        }
+
+        // Password complexity checks
+        const minLength = 8;
+        const hasUppercase = /[A-Z]/;
+        const hasLowercase = /[a-z]/;
+        const hasNumber = /[0-9]/;
+        const hasSpecialChar = /[!@#$%^&*()_+[\]{}|;':",.<>?]/; // Added escaping for special characters
+
+        if (password.length < minLength) {
+            showPopup('Password must be at least ' + minLength + ' characters long.', 'error');
+            return false;
+        }
+        if (!hasUppercase.test(password)) {
+            showPopup('Password must contain at least one uppercase letter.', 'error');
+            return false;
+        }
+        if (!hasLowercase.test(password)) {
+            showPopup('Password must contain at least one lowercase letter.', 'error');
+            return false;
+        }
+        if (!hasNumber.test(password)) {
+            showPopup('Password must contain at least one number.', 'error');
+            return false;
+        }
+        if (!hasSpecialChar.test(password)) {
+            showPopup('Password must contain at least one special character.', 'error');
+            return false;
+        }
+
+        return true;
     }
 </script>
 </body>

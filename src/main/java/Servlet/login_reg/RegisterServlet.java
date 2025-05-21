@@ -4,6 +4,10 @@ import static Servlet.teacherdashboard.EditProfileServlet.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -13,7 +17,6 @@ import dao.StudentDAO;
 import dao.TeacherDAO;
 import dao.UserDAO;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,62 +26,88 @@ import model.Admin;
 import model.Student;
 import model.Teacher;
 import model.User;
+import util.DatabaseConnection;
 
 @WebServlet("/Nav_register_process")
-@MultipartConfig(fileSizeThreshold = 1024 * 1024 * 3, // 3MB
-        maxFileSize = 1024 * 1024 * 5, // 5MB
-        maxRequestSize = 1024 * 1024 * 10 // 10MB
-)
 public class RegisterServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(RegisterServlet.class.getName());
     private static final String[] ALLOWED_EXTENSIONS = { ".jpg", ".jpeg", ".png", ".gif" };
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
-        // Get parameters
+        // Get form data
         String username = request.getParameter("username");
+        String email = request.getParameter("email");
         String password = request.getParameter("password");
         String confirmPassword = request.getParameter("confirmPassword");
-        String email = request.getParameter("email");
-        String role = request.getParameter("role").trim().toLowerCase();
+        String role = request.getParameter("role");
+
+        // Validate input
+        if (username == null || username.trim().isEmpty() ||
+                email == null || email.trim().isEmpty() ||
+                password == null || password.trim().isEmpty() ||
+                confirmPassword == null || confirmPassword.trim().isEmpty() ||
+                role == null || role.trim().isEmpty()) {
+            request.setAttribute("error", "All fields are required.");
+            request.getRequestDispatcher("/WEB-INF/view/register.jsp").forward(request, response);
+            return;
+        }
 
         // Validate password match
         if (!password.equals(confirmPassword)) {
-            request.setAttribute("error", "Passwords do not match");
+            request.setAttribute("error", "Passwords do not match.");
             request.getRequestDispatcher("/WEB-INF/view/register.jsp").forward(request, response);
             return;
         }
 
-        // Create user
-        User user = createUserByRole(role);
-        if (user == null) {
-            request.setAttribute("error", "Invalid role selected");
+        try {
+            UserDAO userDAO = new UserDAO();
+
+            // Check if email already exists
+            String sql = "SELECT COUNT(*) FROM users WHERE email = ?";
+            try (Connection conn = DatabaseConnection.getConnection();
+                    PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, email);
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next() && rs.getInt(1) > 0) {
+                    request.setAttribute("error", "Email already registered. Please use a different email.");
+                    request.getRequestDispatcher("/WEB-INF/view/register.jsp").forward(request, response);
+                    return;
+                }
+            }
+
+            // Create user object using the factory method
+            User user = userDAO.createUserFromRole(role);
+            if (user == null) {
+                request.setAttribute("error", "Invalid role selected.");
+                request.getRequestDispatcher("/WEB-INF/view/register.jsp").forward(request, response);
+                return;
+            }
+
+            // Set user properties
+            user.setUsername(username);
+            user.setEmail(email);
+            user.setPassword(password);
+            user.setRole(role);
+            user.setCreatedAt(new Date());
+
+            // Register user
+            boolean success = userDAO.registerUser(user);
+
+            if (success) {
+                // Set success message and redirect to login
+                request.setAttribute("success", "Registration successful! Please login to continue.");
+                response.sendRedirect(request.getContextPath() + "/Nav_login?registered=true");
+            } else {
+                request.setAttribute("error", "Registration failed. Please try again.");
+                request.getRequestDispatcher("/WEB-INF/view/register.jsp").forward(request, response);
+            }
+        } catch (SQLException e) {
+            request.setAttribute("error", "An error occurred during registration. Please try again later.");
             request.getRequestDispatcher("/WEB-INF/view/register.jsp").forward(request, response);
-            return;
         }
-
-        user.setUsername(username);
-        user.setPassword(password);
-        user.setEmail(email);
-        user.setRole(role);
-        user.setCreatedAt(new Date());
-
-        // Register user
-        UserDAO userDAO = new UserDAO();
-        if (!userDAO.registerUser(user)) {
-            request.setAttribute("error", "Registration failed. Username may already exist.");
-            request.getRequestDispatcher("/WEB-INF/view/register.jsp").forward(request, response);
-            return;
-        }
-
-        // Handle role-specific data
-        if (!saveRoleSpecificData(user, role, request, response)) {
-            return;
-        }
-        // Successful registration - redirect to login
-        response.sendRedirect(request.getContextPath() + "/Nav_login?registered=true");
     }
 
     private User createUserByRole(String role) {
@@ -123,11 +152,23 @@ public class RegisterServlet extends HttpServlet {
         }
 
         boolean success = new StudentDAO().saveStudentData(user, rollNo, className);
-        if (!success) {
+        if (success) {
+            // Student registration successful, now save a notification
+            try {
+                String notificationTitle = "New Student Registered";
+                String notificationMessage = "A new student, " + user.getUsername() + ", has been registered.";
+                new TeacherDAO().saveNotification("student_registration", notificationTitle, notificationMessage);
+                LOGGER.info("Notification saved for new student: " + user.getUsername());
+            } catch (SQLException e) {
+                LOGGER.log(Level.SEVERE, "Error saving notification for new student registration", e);
+                // Log the error, but don't necessarily fail the registration process
+            }
+            return true;
+        } else {
             request.setAttribute("error", "Failed to save student data");
             request.getRequestDispatcher("/WEB-INF/view/register.jsp").forward(request, response);
+            return false;
         }
-        return success;
     }
 
     private boolean handleTeacherRegistration(User user, HttpServletRequest request,
@@ -154,7 +195,8 @@ public class RegisterServlet extends HttpServlet {
                 return false;
             }
             fileName = UUID.randomUUID() + "_" + fileName;
-            String uploadPath = getServletContext().getRealPath("") + File.separator + UPLOAD_DIR;
+            // Save directly under the web context root's Images directory
+            String uploadPath = getServletContext().getRealPath("/") + UPLOAD_DIR;
             LOGGER.info("Upload path: " + uploadPath);
             File uploadDir = new File(uploadPath);
             if (!uploadDir.exists()) {

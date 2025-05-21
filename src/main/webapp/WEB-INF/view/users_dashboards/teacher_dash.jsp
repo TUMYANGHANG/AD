@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="java.text.SimpleDateFormat, java.util.Date, model.User, model.Teacher, model.Student, dao.TeacherDAO, java.sql.SQLException, java.util.List, java.util.ArrayList, java.time.Year" %>
+<%@ page import="java.text.SimpleDateFormat, java.util.Date, model.User, model.Teacher, model.Student, dao.TeacherDAO, java.sql.SQLException, java.util.List, java.util.ArrayList, java.time.Year, java.util.Set, java.util.HashSet" %>
 <%
     User user = (User) session.getAttribute("user");
     if (user == null || !"teacher".equalsIgnoreCase(user.getRole())) {
@@ -374,10 +374,58 @@
             background: #48bb78;
             color: #fff;
             font-weight: 500;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .student-table th:hover {
+            background: #38a169;
+        }
+
+        .student-table th.sort-asc::after {
+            content: '↑';
+            position: absolute;
+            right: 8px;
+        }
+
+        .student-table th.sort-desc::after {
+            content: '↓';
+            position: absolute;
+            right: 8px;
         }
 
         .student-table tr:hover {
             background: #f7fafc;
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .filter-section select {
+            padding: 8px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .filter-section select:focus {
+            border-color: #48bb78;
+            box-shadow: 0 0 6px rgba(72, 187, 120, 0.3);
+        }
+
+        .no-students {
+            text-align: center;
+            padding: 20px;
+            color: #718096;
+            font-style: italic;
         }
 
         .info-section {
@@ -510,11 +558,11 @@
 
 <nav class="sidebar" id="sidebar">
     <ul class="sidebar-menu">
-        <li><a href="${pageContext.request.contextPath}/teacher-dash"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li><a href="${pageContext.request.contextPath}/Nav_teacher_dashServlet"><i class="fas fa-home"></i> Dashboard</a></li>
         <li><a href="${pageContext.request.contextPath}/students"><i class="fas fa-users"></i> Students</a></li>
-        <li><a href="${pageContext.request.contextPath}/manageAttendance"><i class="fas fa-clipboard-check"></i> Attendance</a></li>
-        <li><a href="${pageContext.request.contextPath}/fullSchedule"><i class="fas fa-calendar-alt"></i> Schedule</a></li>
-        <li><a href="${pageContext.request.contextPath}/sendNotification"><i class="fas fa-bell"></i> Notifications</a></li>
+        <li><a href="${pageContext.request.contextPath}/manage-attendance"><i class="fas fa-clipboard-check"></i> Attendance</a></li>
+        <li><a href="${pageContext.request.contextPath}/teacher/reports"><i class="fas fa-chart-bar"></i> Reports</a></li>
+        <li><a href="${pageContext.request.contextPath}/teacher/notifications"><i class="fas fa-bell"></i> Notifications</a></li>
         <li><a href="${pageContext.request.contextPath}/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
     </ul>
 </nav>
@@ -575,23 +623,46 @@
 
         <div class="note" data-aos="fade-up" data-aos-delay="200">Tip: Navigate using the sidebar!</div>
 
-        <!-- Search Bar and Student Table -->
+        <!-- Search and Filter Section -->
         <div class="search-bar" data-aos="fade-up" data-aos-delay="300">
-            <input type="text" id="student-search" placeholder="Search students by name..." onkeyup="searchStudents()">
+            <input type="text" id="student-search" placeholder="Search students by name, roll number, or email..." onkeyup="searchStudents()">
         </div>
+        
+        <div class="filter-section" data-aos="fade-up" data-aos-delay="350">
+            <select id="class-filter" onchange="filterStudents()">
+                <option value="">All Classes</option>
+                <% 
+                Set<String> uniqueClasses = new HashSet<>();
+                for (Student student : students) {
+                    if (student.getClassName() != null) {
+                        uniqueClasses.add(student.getClassName());
+                    }
+                }
+                for (String className : uniqueClasses) {
+                %>
+                <option value="<%= className %>"><%= className %></option>
+                <% } %>
+            </select>
+        </div>
+
         <table class="student-table" id="student-table" data-aos="fade-up" data-aos-delay="400">
             <thead>
             <tr>
-                <th>Photo</th>
-                <th>Name</th>
-                <th>Roll No</th>
-                <th>Class</th>
-                <th>Email</th>
+                <th onclick="sortTable(0)">Photo</th>
+                <th onclick="sortTable(1)">Name</th>
+                <th onclick="sortTable(2)">Roll No</th>
+                <th onclick="sortTable(3)">Class</th>
+                <th onclick="sortTable(4)">Email</th>
                 <th>Action</th>
             </tr>
             </thead>
             <tbody>
-            <% for (Student student : students) { %>
+            <% if (students.isEmpty()) { %>
+            <tr>
+                <td colspan="6" class="no-students">No students found</td>
+            </tr>
+            <% } else {
+                for (Student student : students) { %>
             <tr>
                 <td>
                     <div class="student-photo">
@@ -618,7 +689,7 @@
                     </form>
                 </td>
             </tr>
-            <% } %>
+            <% }} %>
             </tbody>
         </table>
 
@@ -632,17 +703,26 @@
             <div class="card" data-aos="fade-up" data-aos-delay="600">
                 <h3 style="font-size: 18px; font-weight: 500; color: #48bb78; margin-bottom: 10px;"><i class="fas fa-clipboard-check"></i> Attendance Management</h3>
                 <p style="color: #718096;">Mark and review student attendance.</p>
-                <a href="${pageContext.request.contextPath}/manageAttendance" class="btn"><i class="fas fa-check"></i> Mark Attendance</a>
+                <a href="${pageContext.request.contextPath}/manage-attendance" class="btn"><i class="fas fa-check"></i> Mark Attendance</a>
             </div>
             <div class="card" data-aos="fade-up" data-aos-delay="700">
                 <h3 style="font-size: 18px; font-weight: 500; color: #48bb78; margin-bottom: 10px;"><i class="fas fa-calendar-alt"></i> Schedule</h3>
-                <p style="color: #718096;">View your teaching schedule.</p>
-                <a href="${pageContext.request.contextPath}/fullSchedule" class="btn"><i class="fas fa-calendar"></i> View Schedule</a>
+                <p style="color: #718096;">Your teaching schedule is displayed below.</p>
+                <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                    <p style="margin: 0; color: #4B5563;"><i class="fas fa-info-circle"></i> Schedule is view-only</p>
+                </div>
             </div>
             <div class="card" data-aos="fade-up" data-aos-delay="800">
                 <h3 style="font-size: 18px; font-weight: 500; color: #48bb78; margin-bottom: 10px;"><i class="fas fa-bell"></i> Notifications</h3>
                 <p style="color: #718096;">Send and manage notifications.</p>
-                <a href="${pageContext.request.contextPath}/sendNotification" class="btn"><i class="fas fa-paper-plane"></i> Send Notification</a>
+                <a href="${pageContext.request.contextPath}/teacher/notifications" class="btn"><i class="fas fa-bell"></i> View Notifications</a>
+            </div>
+            <div class="card" data-aos="fade-up" data-aos-delay="300">
+                <h2 style="color: #48bb78; margin-bottom: 16px;"><i class="fas fa-chart-bar"></i> Reports</h2>
+                <p style="color: #4B5563; margin-bottom: 16px;">View detailed attendance reports and analytics for your classes.</p>
+                <a href="${pageContext.request.contextPath}/teacher/reports" class="btn">
+                    <i class="fas fa-chart-line"></i> View Reports
+                </a>
             </div>
         </div>
 
@@ -697,10 +777,61 @@
         const input = document.getElementById('student-search').value.toLowerCase();
         const table = document.getElementById('student-table');
         const rows = table.querySelectorAll('tbody tr');
+        const classFilter = document.getElementById('class-filter').value;
+        
         rows.forEach(row => {
             const name = row.cells[1].textContent.toLowerCase();
-            row.style.display = name.includes(input) ? '' : 'none';
+            const rollNo = row.cells[2].textContent.toLowerCase();
+            const email = row.cells[4].textContent.toLowerCase();
+            const className = row.cells[3].textContent;
+            
+            const matchesSearch = name.includes(input) || rollNo.includes(input) || email.includes(input);
+            const matchesClass = !classFilter || className === classFilter;
+            
+            row.style.display = matchesSearch && matchesClass ? '' : 'none';
         });
+    }
+
+    // Filter students by class
+    function filterStudents() {
+        searchStudents(); // Reuse search function to apply both filters
+    }
+
+    // Sort table function
+    function sortTable(n) {
+        const table = document.getElementById('student-table');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const header = table.querySelectorAll('th')[n];
+        
+        // Remove sort indicators from all headers
+        table.querySelectorAll('th').forEach(th => {
+            th.classList.remove('sort-asc', 'sort-desc');
+        });
+        
+        // Determine sort direction
+        const isAsc = !header.classList.contains('sort-asc');
+        header.classList.toggle('sort-asc', isAsc);
+        header.classList.toggle('sort-desc', !isAsc);
+        
+        // Sort rows
+        rows.sort((a, b) => {
+            let x = a.cells[n].textContent.trim();
+            let y = b.cells[n].textContent.trim();
+            
+            // Handle special cases
+            if (x === 'N/A') x = '';
+            if (y === 'N/A') y = '';
+            
+            if (isAsc) {
+                return x.localeCompare(y);
+            } else {
+                return y.localeCompare(x);
+            }
+        });
+        
+        // Reorder rows in the table
+        rows.forEach(row => tbody.appendChild(row));
     }
 
     // Delete confirmation function

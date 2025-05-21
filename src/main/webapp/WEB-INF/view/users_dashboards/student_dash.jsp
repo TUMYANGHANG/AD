@@ -483,7 +483,6 @@
     <div class="logo">Itahari International</div>
     <a href="${pageContext.request.contextPath}/student-dash" title="Go to Dashboard"><i class="fas fa-home"></i><span class="nav-text">Dashboard</span></a>
     <a href="${pageContext.request.contextPath}/student-dash#attendance" title="View Attendance"><i class="fas fa-clipboard-check"></i><span class="nav-text">Attendance</span></a>
-    <a href="${pageContext.request.contextPath}/student-dash#schedule" title="View Schedule"><i class="fas fa-calendar-alt"></i><span class="nav-text">Schedule</span></a>
     <a href="${pageContext.request.contextPath}/student-dash#notifications" title="View Notifications"><i class="fas fa-bell"></i><span class="nav-text">Notifications</span></a>
     <a href="${pageContext.request.contextPath}/student-dash#profile" title="View Profile"><i class="fas fa-user-circle"></i><span class="nav-text">Profile</span></a>
     <a href="${pageContext.request.contextPath}/logout" title="Log Out"><i class="fas fa-sign-out-alt"></i><span class="nav-text">Logout</span></a>
@@ -533,7 +532,7 @@
         </div>
         <div class="id-actions">
             <a href="${pageContext.request.contextPath}/upload_photo" class="btn"><i class="fas fa-upload"></i> Upload Photo</a>
-            <a href="${pageContext.request.contextPath}/editProfile" class="btn"><i class="fas fa-edit"></i> Edit Profile</a>
+            <a href="${pageContext.request.contextPath}/student-edit-profile" class="btn"><i class="fas fa-edit"></i> Edit Profile</a>
             <a href="${pageContext.request.contextPath}/contactTeacher" class="btn"><i class="fas fa-envelope"></i> Contact Teacher</a>
         </div>
     </div>
@@ -557,7 +556,7 @@
             </div>
 
             <div class="card" data-aos="fade-left" id="schedule">
-                <h3 style="font-size: 22px; font-weight: 600; color: #4682b4; margin-bottom: 16px;"><i class="fas fa-calendar-alt fa-lg"></i> Today’s Schedule</h3>
+                <h3 style="font-size: 22px; font-weight: 600; color: #4682b4; margin-bottom: 16px;"><i class="fas fa-calendar-alt fa-lg"></i> Today's Schedule</h3>
                 <ul class="schedule-list">
                     <%
                         List<Map<String, String>> schedule = (List<Map<String, String>>) request.getAttribute("classSchedule");

@@ -39,3 +39,11 @@ CREATE TABLE IF NOT EXISTS notifications (
     message VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS attendence (
+                                          AttendenceID INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                                          User_ID INT(11) NOT NULL,
+                                          Date DATE NOT NULL,
+                                          Faculty VARCHAR(100) NOT NULL,
+                                          Status VARCHAR(20) NOT NULL,
+                                          Day VARCHAR(20) NOT NULL
+);

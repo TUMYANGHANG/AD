@@ -287,7 +287,6 @@
     <div class="logo">Itahari International</div>
     <a href="${pageContext.request.contextPath}/student-dash" title="Go to Dashboard"><i class="fas fa-home"></i><span class="nav-text">Dashboard</span></a>
     <a href="${pageContext.request.contextPath}/student-dash#attendance" title="View Attendance"><i class="fas fa-clipboard-check"></i><span class="nav-text">Attendance</span></a>
-    <a href="${pageContext.request.contextPath}/student-dash#schedule" title="View Schedule"><i class="fas fa-calendar-alt"></i><span class="nav-text">Schedule</span></a>
     <a href="${pageContext.request.contextPath}/student-dash#notifications" title="View Notifications"><i class="fas fa-bell"></i><span class="nav-text">Notifications</span></a>
     <a href="${pageContext.request.contextPath}/student-dash#profile" title="View Profile"><i class="fas fa-user-circle"></i><span class="nav-text">Profile</span></a>
     <a href="${pageContext.request.contextPath}/logout" title="Log Out"><i class="fas fa-sign-out-alt"></i><span class="nav-text">Logout</span></a>

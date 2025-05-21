@@ -1,109 +1,121 @@
 package Servlet.Dashboards;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import dao.AdminDAO;
 import dao.StudentDAO;
 import dao.TeacherDAO;
-import dao.UserDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import model.Attendance;
+import model.Class;
 import model.Student;
 import model.Teacher;
 import model.User;
 
 @WebServlet("/admin/reports/*")
 public class AdminReportsServlet extends HttpServlet {
-  private StudentDAO studentDAO;
+  private static final long serialVersionUID = 1L;
+  private static final Logger LOGGER = Logger.getLogger(AdminReportsServlet.class.getName());
+  private AdminDAO adminDAO;
   private TeacherDAO teacherDAO;
-  private UserDAO userDAO;
+  private StudentDAO studentDAO;
 
   @Override
   public void init() throws ServletException {
-    studentDAO = new StudentDAO();
+    adminDAO = new AdminDAO();
     teacherDAO = new TeacherDAO();
-    userDAO = new UserDAO();
+    studentDAO = new StudentDAO();
   }
 
   @Override
-  protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    HttpSession session = request.getSession();
-    User user = (User) session.getAttribute("user");
-
-    // Check if user is logged in and is an admin
-    if (user == null || !"admin".equalsIgnoreCase(user.getRole())) {
-      response.sendRedirect(request.getContextPath() + "/login?error=unauthenticated");
+  protected void doGet(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    LOGGER.info("AdminReportsServlet doGet method reached.");
+    HttpSession session = request.getSession(false);
+    if (session == null || session.getAttribute("user") == null) {
+      LOGGER.warning("Unauthorized access to AdminReportsServlet - no session or user.");
+      response.sendRedirect(request.getContextPath() + "/login?unauthorized=true");
       return;
     }
 
-    String pathInfo = request.getPathInfo();
-    if (pathInfo == null || pathInfo.equals("/")) {
-      // Show reports page
+    User user = (User) session.getAttribute("user");
+    if (!"admin".equalsIgnoreCase(user.getRole())) {
+      LOGGER.warning("Unauthorized access to AdminReportsServlet - user is not admin.");
+      response.sendRedirect(request.getContextPath() + "/login?unauthorized=true");
+      return;
+    }
+
+    String action = request.getPathInfo();
+    LOGGER.info("AdminReportsServlet action: " + action);
+
+    if (action == null || action.equals("/")) {
       showReportsPage(request, response);
-    } else if (pathInfo.equals("/generate")) {
-      // Generate report based on filters
+    } else if (action.equals("/generate")) {
       generateReport(request, response);
     } else {
+      LOGGER.warning("AdminReportsServlet - Resource not found for action: " + action);
       response.sendError(HttpServletResponse.SC_NOT_FOUND);
     }
   }
 
   private void showReportsPage(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
+    LOGGER.info("AdminReportsServlet - showReportsPage method reached.");
     try {
-      // Load initial report data
+      // Get total counts
+      int totalStudents = studentDAO.getAllStudents().size();
+      int totalTeachers = teacherDAO.getAllTeachers().size();
+      int totalClasses = adminDAO.getAllClasses().size();
+
+      // Calculate attendance statistics
+      double studentAttendance = calculateStudentAttendance();
+      double teacherAttendance = calculateTeacherAttendance();
+
+      // Get attendance records for both students and teachers
+      List<Attendance> studentRecords = adminDAO.getAttendanceRecords(null, null, "student");
+      List<Attendance> teacherRecords = adminDAO.getAttendanceRecords(null, null, "teacher");
+
+      // Prepare report data
       Map<String, Object> reportData = new HashMap<>();
-
-      // Get total students
-      List<Student> students = studentDAO.getAllStudents();
-      reportData.put("totalStudents", students.size());
-
-      // Get total teachers
-      List<Teacher> teachers = teacherDAO.getAllTeachers();
-      reportData.put("totalTeachers", teachers.size());
-
-      // Calculate average attendance
-      double averageAttendance = calculateAverageAttendance(students);
-      reportData.put("averageAttendance", String.format("%.1f", averageAttendance));
-
-      // Get total classes (placeholder for now)
-      reportData.put("totalClasses", 10);
+      reportData.put("totalStudents", totalStudents);
+      reportData.put("totalTeachers", totalTeachers);
+      reportData.put("totalClasses", totalClasses);
+      reportData.put("studentAttendance", studentAttendance);
+      reportData.put("teacherAttendance", teacherAttendance);
+      reportData.put("studentRecords", studentRecords);
+      reportData.put("teacherRecords", teacherRecords);
 
       request.setAttribute("reportData", reportData);
+      LOGGER.info("Forwarding to admin reports JSP.");
       request.getRequestDispatcher("/WEB-INF/view/users_dashboards/admin_dashboard/reports.jsp")
           .forward(request, response);
     } catch (Exception e) {
-      e.printStackTrace();
+      LOGGER.log(Level.SEVERE, "Error in showReportsPage", e);
       response.sendRedirect(request.getContextPath() + "/admin?error=report_error");
     }
   }
 
   private void generateReport(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    String reportType = request.getParameter("type");
-    String startDate = request.getParameter("startDate");
-    String endDate = request.getParameter("endDate");
-
+    LOGGER.info("AdminReportsServlet - generateReport method reached.");
     try {
+      String reportType = request.getParameter("type");
+      String startDate = request.getParameter("startDate");
+      String endDate = request.getParameter("endDate");
+
       Map<String, Object> reportData = new HashMap<>();
 
-      // Load base statistics
-      List<Student> students = studentDAO.getAllStudents();
-      reportData.put("totalStudents", students.size());
-
-      List<Teacher> teachers = teacherDAO.getAllTeachers();
-      reportData.put("totalTeachers", teachers.size());
-
-      double averageAttendance = calculateAverageAttendance(students);
-      reportData.put("averageAttendance", String.format("%.1f", averageAttendance));
-
-      // Generate specific report based on type
       switch (reportType) {
         case "attendance":
           generateAttendanceReport(reportData, startDate, endDate);
@@ -114,47 +126,105 @@ public class AdminReportsServlet extends HttpServlet {
         case "student":
           generateStudentReport(reportData, startDate, endDate);
           break;
+        case "teacher":
+          generateTeacherReport(reportData, startDate, endDate);
+          break;
         default:
-          throw new IllegalArgumentException("Invalid report type");
+          LOGGER.warning("Invalid report type: " + reportType);
+          response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid report type");
+          return;
       }
 
       request.setAttribute("reportData", reportData);
+      LOGGER.info("Forwarding generated report to admin reports JSP.");
       request.getRequestDispatcher("/WEB-INF/view/users_dashboards/admin_dashboard/reports.jsp")
           .forward(request, response);
+    } catch (SQLException e) {
+      LOGGER.log(Level.SEVERE, "SQL Error in generateReport", e);
+      response.sendRedirect(request.getContextPath() + "/admin?error=report_error");
     } catch (Exception e) {
-      e.printStackTrace();
-      response.sendRedirect(request.getContextPath() + "/admin/reports?error=generation_failed");
+      LOGGER.log(Level.SEVERE, "Error in generateReport", e);
+      response.sendRedirect(request.getContextPath() + "/admin?error=report_error");
     }
   }
 
-  private void generateAttendanceReport(Map<String, Object> reportData, String startDate, String endDate) {
-    // TODO: Implement attendance report generation
-    // This would typically involve:
-    // 1. Querying attendance records for the date range
-    // 2. Calculating attendance statistics
-    // 3. Preparing data for visualization
-    reportData.put("reportType", "attendance");
-    reportData.put("startDate", startDate);
-    reportData.put("endDate", endDate);
+  private double calculateStudentAttendance() throws SQLException {
+    LOGGER.info("AdminReportsServlet - calculateStudentAttendance method reached.");
+    List<Attendance> records = adminDAO.getAttendanceRecords(null, null, "student");
+    return calculateAttendanceRate(records);
   }
 
-  private void generateClassReport(Map<String, Object> reportData, String startDate, String endDate) {
-    // TODO: Implement class-wise report generation
-    reportData.put("reportType", "class");
-    reportData.put("startDate", startDate);
-    reportData.put("endDate", endDate);
+  private double calculateTeacherAttendance() throws SQLException {
+    LOGGER.info("AdminReportsServlet - calculateTeacherAttendance method reached.");
+    List<Attendance> records = adminDAO.getAttendanceRecords(null, null, "teacher");
+    return calculateAttendanceRate(records);
   }
 
-  private void generateStudentReport(Map<String, Object> reportData, String startDate, String endDate) {
-    // TODO: Implement student-wise report generation
-    reportData.put("reportType", "student");
-    reportData.put("startDate", startDate);
-    reportData.put("endDate", endDate);
+  private double calculateAttendanceRate(List<Attendance> records) {
+    LOGGER.info("AdminReportsServlet - calculateAttendanceRate method reached.");
+    if (records.isEmpty()) {
+      return 0.0;
+    }
+    long presentCount = records.stream()
+        .filter(record -> "present".equalsIgnoreCase(record.getStatus()))
+        .count();
+    return (double) presentCount / records.size() * 100;
   }
 
-  private double calculateAverageAttendance(List<Student> students) {
-    // TODO: Implement actual attendance calculation
-    // For now, return a placeholder value
-    return 85.5;
+  private void generateAttendanceReport(Map<String, Object> reportData, String startDate, String endDate)
+      throws SQLException {
+    LOGGER.info("AdminReportsServlet - generateAttendanceReport method reached.");
+    List<Attendance> studentAttendance = adminDAO.getAttendanceRecords(startDate, endDate, "student");
+    List<Attendance> teacherAttendance = adminDAO.getAttendanceRecords(startDate, endDate, "teacher");
+
+    double studentAttendanceRate = calculateAttendanceRate(studentAttendance);
+    double teacherAttendanceRate = calculateAttendanceRate(teacherAttendance);
+
+    reportData.put("studentAttendance", studentAttendanceRate);
+    reportData.put("teacherAttendance", teacherAttendanceRate);
+    reportData.put("studentRecords", studentAttendance);
+    reportData.put("teacherRecords", teacherAttendance);
+  }
+
+  private void generateClassReport(Map<String, Object> reportData, String startDate, String endDate)
+      throws SQLException {
+    LOGGER.info("AdminReportsServlet - generateClassReport method reached.");
+    List<Class> classes = adminDAO.getAllClasses();
+    Map<String, List<Attendance>> classAttendance = new HashMap<>();
+
+    for (Class cls : classes) {
+      List<Attendance> attendance = adminDAO.getClassAttendance(cls.getId(), startDate, endDate);
+      classAttendance.put(cls.getName(), attendance);
+    }
+
+    reportData.put("classAttendance", classAttendance);
+  }
+
+  private void generateStudentReport(Map<String, Object> reportData, String startDate, String endDate)
+      throws SQLException {
+    LOGGER.info("AdminReportsServlet - generateStudentReport method reached.");
+    List<Student> students = studentDAO.getAllStudents();
+    Map<Integer, List<Attendance>> studentAttendance = new HashMap<>();
+
+    for (Student student : students) {
+      List<Attendance> attendance = adminDAO.getStudentAttendance(student.getId(), startDate, endDate);
+      studentAttendance.put(student.getId(), attendance);
+    }
+
+    reportData.put("studentAttendance", studentAttendance);
+  }
+
+  private void generateTeacherReport(Map<String, Object> reportData, String startDate, String endDate)
+      throws SQLException {
+    LOGGER.info("AdminReportsServlet - generateTeacherReport method reached.");
+    List<Teacher> teachers = teacherDAO.getAllTeachers();
+    Map<Integer, List<Attendance>> teacherAttendance = new HashMap<>();
+
+    for (Teacher teacher : teachers) {
+      List<Attendance> attendance = adminDAO.getTeacherAttendance(teacher.getId(), startDate, endDate);
+      teacherAttendance.put(teacher.getId(), attendance);
+    }
+
+    reportData.put("teacherAttendance", teacherAttendance);
   }
 }

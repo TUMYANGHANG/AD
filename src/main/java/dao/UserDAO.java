@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,63 +50,53 @@ public class UserDAO {
         }
     }
 
-    public User authenticate(String email, String password) {
-        User user = null;
-        String sql = "SELECT * FROM users WHERE email = ?";
+    public User authenticate(String username, String password) throws SQLException {
+        String query = "SELECT * FROM users WHERE username = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, email);
-            ResultSet rs = pstmt.executeQuery();
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
 
-            if (rs.next()) {
-                String storedHash = rs.getString("password");
-                if (BCrypt.checkpw(password, storedHash)) {
-                    String role = rs.getString("role");
-                    user = createUserFromRole(role);
-                    if (user != null) {
+            pstmt.setString(1, username);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String hashedPassword = rs.getString("password");
+                    // Verify the password using BCrypt
+                    if (BCrypt.checkpw(password, hashedPassword)) {
+                        User user = new User();
                         user.setId(rs.getInt("id"));
                         user.setUsername(rs.getString("username"));
-                        user.setPassword(storedHash);
-                        user.setRole(role);
                         user.setEmail(rs.getString("email"));
-                        user.setCreatedAt(rs.getDate("created_at"));
+                        user.setRole(rs.getString("role"));
+                        user.setCreatedAt(rs.getTimestamp("created_at"));
+                        return user;
                     }
                 }
             }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Authentication error for email: " + email, e);
-            throw new RuntimeException("Authentication error", e);
         }
-        return user;
+        return null;
     }
 
-    public User getUserById(int userId) {
-        String sql = "SELECT * FROM users WHERE id = ?";
+    public User getUserData(int userId) throws SQLException {
+        String query = "SELECT * FROM users WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(query)) {
 
             pstmt.setInt(1, userId);
-            ResultSet rs = pstmt.executeQuery();
 
-            if (rs.next()) {
-                String role = rs.getString("role");
-                User user = createUserFromRole(role);
-                if (user != null) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    User user = new User();
                     user.setId(rs.getInt("id"));
                     user.setUsername(rs.getString("username"));
                     user.setEmail(rs.getString("email"));
-                    user.setRole(role);
-                    user.setCreatedAt(rs.getDate("created_at"));
+                    user.setRole(rs.getString("role"));
+                    user.setCreatedAt(rs.getTimestamp("created_at"));
                     return user;
                 }
             }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error fetching user by ID: " + userId, e);
-            throw new RuntimeException("Error fetching user", e);
         }
-
         return null;
     }
 
@@ -161,9 +152,17 @@ public class UserDAO {
                 return true;
             }
             return false;
+        } catch (SQLIntegrityConstraintViolationException e) {
+            // Log specific duplicate entry error
+            LOGGER.log(Level.WARNING, "Registration failed due to duplicate entry for username or email: "
+                    + user.getUsername() + " / " + user.getEmail(), e);
+            return false; // Indicate failure due to duplicate constraint
         } catch (SQLException e) {
+            // Log other SQL errors
             LOGGER.log(Level.SEVERE, "Error registering user: " + user.getUsername(), e);
-            throw new RuntimeException("Error registering user", e);
+            // Optionally, re-throw a more specific custom exception or the original
+            // SQLException
+            throw new RuntimeException("Error registering user", e); // Re-throwing for now, will catch in servlet
         }
     }
 
@@ -178,16 +177,13 @@ public class UserDAO {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                String role = rs.getString("role");
-                User user = createUserFromRole(role);
-                if (user != null) {
-                    user.setId(rs.getInt("id"));
-                    user.setUsername(rs.getString("username"));
-                    user.setEmail(rs.getString("email"));
-                    user.setRole(role);
-                    user.setCreatedAt(rs.getDate("created_at"));
-                    recentUsers.add(user);
-                }
+                User user = new User();
+                user.setId(rs.getInt("id"));
+                user.setUsername(rs.getString("username"));
+                user.setEmail(rs.getString("email"));
+                user.setRole(rs.getString("role"));
+                user.setCreatedAt(rs.getTimestamp("created_at"));
+                recentUsers.add(user);
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error fetching recent registrations", e);
