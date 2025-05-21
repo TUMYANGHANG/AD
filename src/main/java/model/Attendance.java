@@ -6,18 +6,20 @@ public class Attendance {
   private int id;
   private int userId;
   private Date date;
+  private String faculty;
   private String status;
-  private String type;
+  private String day;
 
   public Attendance() {
   }
 
-  public Attendance(int id, int userId, Date date, String status, String type) {
+  public Attendance(int id, int userId, Date date, String faculty, String status, String day) {
     this.id = id;
     this.userId = userId;
     this.date = date;
+    this.faculty = faculty;
     this.status = status;
-    this.type = type;
+    this.day = day;
   }
 
   public int getId() {
@@ -44,6 +46,14 @@ public class Attendance {
     this.date = date;
   }
 
+  public String getFaculty() {
+    return faculty;
+  }
+
+  public void setFaculty(String faculty) {
+    this.faculty = faculty;
+  }
+
   public String getStatus() {
     return status;
   }
@@ -52,11 +62,11 @@ public class Attendance {
     this.status = status;
   }
 
-  public String getType() {
-    return type;
+  public String getDay() {
+    return day;
   }
 
-  public void setType(String type) {
-    this.type = type;
+  public void setDay(String day) {
+    this.day = day;
   }
 }

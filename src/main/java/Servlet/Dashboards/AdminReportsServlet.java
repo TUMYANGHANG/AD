@@ -97,6 +97,15 @@ public class AdminReportsServlet extends HttpServlet {
         studentAttendanceMap.computeIfAbsent(record.getUserId(), k -> new ArrayList<>()).add(record);
       }
 
+      // Debugging logs
+      LOGGER.info("AdminReportsServlet - showReportsPage: Number of students fetched: "
+          + (studentRecordsList != null ? studentRecordsList.size() : "null"));
+      LOGGER.info(
+          "AdminReportsServlet - showReportsPage: studentAttendanceMap is null: " + (studentAttendanceMap == null));
+      if (studentAttendanceMap != null) {
+        LOGGER.info("AdminReportsServlet - showReportsPage: studentAttendanceMap size: " + studentAttendanceMap.size());
+      }
+
       // Prepare report data
       Map<String, Object> reportData = new HashMap<>();
       reportData.put("totalStudents", totalStudents);

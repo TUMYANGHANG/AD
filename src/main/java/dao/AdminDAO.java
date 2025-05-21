@@ -50,7 +50,7 @@ public class AdminDAO {
                     record.setUserId(rs.getInt("user_id"));
                     record.setDate(rs.getDate("date"));
                     record.setStatus(rs.getString("status"));
-                    record.setType(rs.getString("type"));
+                    record.setDay(rs.getString("type"));
                     records.add(record);
                 }
             }
@@ -86,7 +86,7 @@ public class AdminDAO {
                     record.setUserId(rs.getInt("user_id"));
                     record.setDate(rs.getDate("date"));
                     record.setStatus(rs.getString("status"));
-                    record.setType(rs.getString("type"));
+                    record.setDay(rs.getString("type"));
                     records.add(record);
                 }
             }
@@ -120,7 +120,7 @@ public class AdminDAO {
                     record.setUserId(rs.getInt("user_id"));
                     record.setDate(rs.getDate("date"));
                     record.setStatus(rs.getString("status"));
-                    record.setType(rs.getString("type"));
+                    record.setDay(rs.getString("type"));
                     records.add(record);
                 }
             }
@@ -154,7 +154,7 @@ public class AdminDAO {
                     record.setUserId(rs.getInt("user_id"));
                     record.setDate(rs.getDate("date"));
                     record.setStatus(rs.getString("status"));
-                    record.setType(rs.getString("type"));
+                    record.setDay(rs.getString("type"));
                     records.add(record);
                 }
             }
