@@ -326,7 +326,7 @@
             <% if (errorMessage != null) { %>
                 <div class="note error"><%= errorMessage %></div>
             <% } %>
-            <form action="${pageContext.request.contextPath}/login" method="post">
+            <form action="${pageContext.request.contextPath}/Nav_login" method="post">
                 <div class="form-group">
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" class="form-control" required>

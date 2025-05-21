@@ -618,7 +618,7 @@
       } else {
       %>
       <a href="${pageContext.request.contextPath}/Nav_login" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px;">Login</a>
-      <a href="${pageContext.request.contextPath}/register" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px;">Register</a>
+      <a href="${pageContext.request.contextPath}/Nav_register" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px;">Register</a>
       <%
         }
       %>

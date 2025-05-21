@@ -20,6 +20,6 @@ public class LoginnavServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         // Forward to LoginServlet for processing
-        request.getRequestDispatcher("/Nav_login_process").forward(request, response);
+        request.getRequestDispatcher("/login_process").forward(request, response);
     }
 }

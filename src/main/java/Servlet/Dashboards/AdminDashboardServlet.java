@@ -64,7 +64,7 @@ public class AdminDashboardServlet extends HttpServlet {
             List<Student> students = studentDAO.getAllStudents();
             List<Teacher> teachers = teacherDAO.getAllTeachers();
             List<User> recentRegistrations = userDAO.getRecentRegistrations(5); // Get 5 most recent registrations
-            int totalClasses = adminDAO.getAllClasses().size();
+            int totalClasses = adminDAO.getTotalClasses();
 
             // Calculate attendance statistics
             double studentAttendanceRate = calculateAttendanceRate("student");

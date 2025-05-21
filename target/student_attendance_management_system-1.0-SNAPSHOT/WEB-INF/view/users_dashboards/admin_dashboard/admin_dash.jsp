@@ -747,7 +747,7 @@
         <a href="${pageContext.request.contextPath}/admin/users" class="cta-button" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px; margin-top: 16px; display: inline-block;"><i class="fas fa-eye"></i> Manage Users</a>
       </div>
 
-      <!-- Attendance Reports -->
+      <!-- Attendance Reports
       <div class="card" data-aos="fade-up" data-aos-delay="100">
                 <h2 style="color: #4a90e2; margin-bottom: 16px;"><i class="fas fa-chart-pie"></i> Attendance Reports</h2>
                 <div class="progress-circle" data-progress="<%= averageAttendance %>">
@@ -764,7 +764,7 @@
                 <a href="${pageContext.request.contextPath}/admin/reports" class="btn">
                     <i class="fas fa-file-alt"></i> View Reports
                 </a>
-            </div>
+            </div> -->
 
       <!-- Notifications -->
       <div class="card" style="background-color: #f0f8ff; padding: 24px; border-radius: 8px;" data-aos="flip-left" data-aos-duration="800" data-aos-delay="400" id="notifications">

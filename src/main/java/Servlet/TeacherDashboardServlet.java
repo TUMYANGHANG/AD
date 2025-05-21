@@ -16,7 +16,7 @@ import model.Student;
 import model.Teacher;
 import model.User;
 
-@WebServlet("/teacher-dashboard")
+@WebServlet({ "/teacher", "/teacher-dashboard" })
 public class TeacherDashboardServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

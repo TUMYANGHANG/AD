@@ -12,7 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.User;
 
-@WebServlet("/login")
+@WebServlet(name = "LoginServlet", value = "/login_process")
 public class LoginServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private UserDAO userDAO;
@@ -27,6 +27,12 @@ public class LoginServlet extends HttpServlet {
             throws ServletException, IOException {
         String username = request.getParameter("username");
         String password = request.getParameter("password");
+
+        if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            request.setAttribute("error", "Username and password are required");
+            request.getRequestDispatcher("/WEB-INF/view/login.jsp").forward(request, response);
+            return;
+        }
 
         try {
             User user = userDAO.authenticate(username, password);
@@ -52,16 +58,19 @@ public class LoginServlet extends HttpServlet {
                         response.sendRedirect(request.getContextPath() + "/student");
                         break;
                     default:
-                        response.sendRedirect(request.getContextPath() + "/login?error=invalid_role");
+                        request.setAttribute("error", "Invalid user role");
+                        request.getRequestDispatcher("/WEB-INF/view/login.jsp").forward(request, response);
                         break;
                 }
             } else {
                 // Invalid credentials
-                response.sendRedirect(request.getContextPath() + "/login?error=invalid_credentials");
+                request.setAttribute("error", "Invalid username or password");
+                request.getRequestDispatcher("/WEB-INF/view/login.jsp").forward(request, response);
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/login?error=database_error");
+            request.setAttribute("error", "Database error occurred. Please try again later.");
+            request.getRequestDispatcher("/WEB-INF/view/login.jsp").forward(request, response);
         }
     }
 
@@ -86,7 +95,7 @@ public class LoginServlet extends HttpServlet {
                     response.sendRedirect(request.getContextPath() + "/student");
                     break;
                 default:
-                    response.sendRedirect(request.getContextPath() + "/login");
+                    response.sendRedirect(request.getContextPath() + "/Nav_login");
                     break;
             }
         } else {

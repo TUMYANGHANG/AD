@@ -1,6 +1,9 @@
 package Servlet.Dashboards;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
@@ -18,10 +21,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Attendance;
-import model.Class;
 import model.Student;
 import model.Teacher;
 import model.User;
+import util.DatabaseConnection;
 
 @WebServlet("/admin/reports/*")
 public class AdminReportsServlet extends HttpServlet {
@@ -76,7 +79,7 @@ public class AdminReportsServlet extends HttpServlet {
       // Get total counts
       int totalStudents = studentDAO.getAllStudents().size();
       int totalTeachers = teacherDAO.getAllTeachers().size();
-      int totalClasses = adminDAO.getAllClasses().size();
+      int totalClasses = adminDAO.getTotalClasses();
 
       // Calculate attendance statistics
       double studentAttendance = calculateStudentAttendance();
@@ -189,12 +192,17 @@ public class AdminReportsServlet extends HttpServlet {
   private void generateClassReport(Map<String, Object> reportData, String startDate, String endDate)
       throws SQLException {
     LOGGER.info("AdminReportsServlet - generateClassReport method reached.");
-    List<Class> classes = adminDAO.getAllClasses();
+    String query = "SELECT DISTINCT classname FROM student";
     Map<String, List<Attendance>> classAttendance = new HashMap<>();
 
-    for (Class cls : classes) {
-      List<Attendance> attendance = adminDAO.getClassAttendance(cls.getId(), startDate, endDate);
-      classAttendance.put(cls.getName(), attendance);
+    try (Connection conn = DatabaseConnection.getConnection();
+        PreparedStatement pstmt = conn.prepareStatement(query);
+        ResultSet rs = pstmt.executeQuery()) {
+      while (rs.next()) {
+        String className = rs.getString("classname");
+        List<Attendance> attendance = adminDAO.getClassAttendance(className, startDate, endDate);
+        classAttendance.put(className, attendance);
+      }
     }
 
     reportData.put("classAttendance", classAttendance);

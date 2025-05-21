@@ -4,42 +4,26 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import model.Attendance;
-import model.Class;
-import util.DBConnection;
+import util.DatabaseConnection;
 
 public class AdminDAO {
-    private Connection conn;
+    private static final Logger LOGGER = Logger.getLogger(AdminDAO.class.getName());
 
-    public AdminDAO() {
-        try {
-            conn = DBConnection.getConnection();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public List<Class> getAllClasses() throws SQLException {
-        List<Class> classes = new ArrayList<>();
-        String query = "SELECT * FROM classes";
-
-        try (Statement stmt = conn.createStatement();
-                ResultSet rs = stmt.executeQuery(query)) {
-
-            while (rs.next()) {
-                Class cls = new Class();
-                cls.setId(rs.getInt("id"));
-                cls.setName(rs.getString("name"));
-                cls.setDescription(rs.getString("description"));
-                classes.add(cls);
+    public int getTotalClasses() throws SQLException {
+        String query = "SELECT COUNT(DISTINCT classname) as total FROM student";
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(query);
+                ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt("total");
             }
         }
-
-        return classes;
+        return 0;
     }
 
     public List<Attendance> getAttendanceRecords(String startDate, String endDate, String type) throws SQLException {
@@ -50,7 +34,8 @@ public class AdminDAO {
             query.append(" AND date BETWEEN ? AND ?");
         }
 
-        try (PreparedStatement pstmt = conn.prepareStatement(query.toString())) {
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(query.toString())) {
             pstmt.setString(1, type);
 
             if (startDate != null && endDate != null) {
@@ -74,19 +59,20 @@ public class AdminDAO {
         return records;
     }
 
-    public List<Attendance> getClassAttendance(int classId, String startDate, String endDate) throws SQLException {
+    public List<Attendance> getClassAttendance(String className, String startDate, String endDate) throws SQLException {
         List<Attendance> records = new ArrayList<>();
         StringBuilder query = new StringBuilder(
                 "SELECT a.* FROM attendance a " +
-                        "JOIN students s ON a.user_id = s.id " +
-                        "WHERE s.class_id = ? AND a.type = 'student'");
+                        "JOIN student s ON a.user_id = s.user_id " +
+                        "WHERE s.classname = ? AND a.type = 'student'");
 
         if (startDate != null && endDate != null) {
             query.append(" AND a.date BETWEEN ? AND ?");
         }
 
-        try (PreparedStatement pstmt = conn.prepareStatement(query.toString())) {
-            pstmt.setInt(1, classId);
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(query.toString())) {
+            pstmt.setString(1, className);
 
             if (startDate != null && endDate != null) {
                 pstmt.setString(2, startDate);
@@ -118,7 +104,8 @@ public class AdminDAO {
             query.append(" AND date BETWEEN ? AND ?");
         }
 
-        try (PreparedStatement pstmt = conn.prepareStatement(query.toString())) {
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(query.toString())) {
             pstmt.setInt(1, studentId);
 
             if (startDate != null && endDate != null) {
@@ -151,7 +138,8 @@ public class AdminDAO {
             query.append(" AND date BETWEEN ? AND ?");
         }
 
-        try (PreparedStatement pstmt = conn.prepareStatement(query.toString())) {
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(query.toString())) {
             pstmt.setInt(1, teacherId);
 
             if (startDate != null && endDate != null) {
