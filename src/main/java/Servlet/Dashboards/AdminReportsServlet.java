@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,18 +87,26 @@ public class AdminReportsServlet extends HttpServlet {
       double teacherAttendance = calculateTeacherAttendance();
 
       // Get attendance records for both students and teachers
-      List<Attendance> studentRecords = adminDAO.getAttendanceRecords(null, null, "student");
+      List<Attendance> studentRecordsList = adminDAO.getAttendanceRecords(null, null, "student");
       List<Attendance> teacherRecords = adminDAO.getAttendanceRecords(null, null, "teacher");
+
+      // Create a map of student attendance records by student ID for easier access in
+      // JSP
+      Map<Integer, List<Attendance>> studentAttendanceMap = new HashMap<>();
+      for (Attendance record : studentRecordsList) {
+        studentAttendanceMap.computeIfAbsent(record.getUserId(), k -> new ArrayList<>()).add(record);
+      }
 
       // Prepare report data
       Map<String, Object> reportData = new HashMap<>();
       reportData.put("totalStudents", totalStudents);
       reportData.put("totalTeachers", totalTeachers);
       reportData.put("totalClasses", totalClasses);
-      reportData.put("studentAttendance", studentAttendance);
+      reportData.put("studentAttendance", studentAttendance); // Overall student attendance rate
       reportData.put("teacherAttendance", teacherAttendance);
-      reportData.put("studentRecords", studentRecords);
+      reportData.put("studentRecords", studentRecordsList); // Keep the list for other potential uses
       reportData.put("teacherRecords", teacherRecords);
+      reportData.put("studentAttendanceMap", studentAttendanceMap); // New map for JSP table
 
       request.setAttribute("reportData", reportData);
       LOGGER.info("Forwarding to admin reports JSP.");
@@ -177,16 +186,24 @@ public class AdminReportsServlet extends HttpServlet {
   private void generateAttendanceReport(Map<String, Object> reportData, String startDate, String endDate)
       throws SQLException {
     LOGGER.info("AdminReportsServlet - generateAttendanceReport method reached.");
-    List<Attendance> studentAttendance = adminDAO.getAttendanceRecords(startDate, endDate, "student");
+    List<Attendance> studentAttendanceList = adminDAO.getAttendanceRecords(startDate, endDate, "student");
     List<Attendance> teacherAttendance = adminDAO.getAttendanceRecords(startDate, endDate, "teacher");
 
-    double studentAttendanceRate = calculateAttendanceRate(studentAttendance);
+    // Create a map of student attendance records by student ID for easier access in
+    // JSP
+    Map<Integer, List<Attendance>> studentAttendanceMap = new HashMap<>();
+    for (Attendance record : studentAttendanceList) {
+      studentAttendanceMap.computeIfAbsent(record.getUserId(), k -> new ArrayList<>()).add(record);
+    }
+
+    double studentAttendanceRate = calculateAttendanceRate(studentAttendanceList);
     double teacherAttendanceRate = calculateAttendanceRate(teacherAttendance);
 
     reportData.put("studentAttendance", studentAttendanceRate);
     reportData.put("teacherAttendance", teacherAttendanceRate);
-    reportData.put("studentRecords", studentAttendance);
+    reportData.put("studentRecords", studentAttendanceList); // Keep the list for other potential uses
     reportData.put("teacherRecords", teacherAttendance);
+    reportData.put("studentAttendanceMap", studentAttendanceMap); // New map for JSP table
   }
 
   private void generateClassReport(Map<String, Object> reportData, String startDate, String endDate)

@@ -272,108 +272,73 @@
     </nav>
 
     <div class="container">
-        <!-- Report Filters -->
-        <div class="card" data-aos="fade-up">
-            <h2 style="color: #48bb78; margin-bottom: 16px;"><i class="fas fa-filter"></i> Report Filters</h2>
-            <form action="${pageContext.request.contextPath}/teacher/reports/generate" method="get" class="report-filters">
-                <div class="filter-group">
-                    <label for="reportType">Report Type</label>
-                    <select id="reportType" name="type" required>
-                        <option value="attendance">Attendance Report</option>
-                        <option value="class">Class-wise Report</option>
-                        <option value="student">Student-wise Report</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label for="startDate">Start Date</label>
-                    <input type="date" id="startDate" name="startDate" required>
-                </div>
-                <div class="filter-group">
-                    <label for="endDate">End Date</label>
-                    <input type="date" id="endDate" name="endDate" required>
-                </div>
-                <div class="filter-group">
-                    <label for="className">Class</label>
-                    <select id="className" name="className">
-                        <option value="">All Classes</option>
-                        <%
-                        Set<String> uniqueClasses = new HashSet<>();
-                        for (Student student : students) {
-                            if (student.getClassName() != null) {
-                                uniqueClasses.add(student.getClassName());
-                            }
-                        }
-                        for (String className : uniqueClasses) {
-                        %>
-                        <option value="<%= className %>"><%= className %></option>
-                        <% } %>
-                    </select>
-                </div>
-                <div class="filter-group" style="display: flex; align-items: flex-end;">
-                    <button type="submit" class="btn">
-                        <i class="fas fa-search"></i> Generate Report
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Statistics Overview -->
-        <div class="stats-grid" data-aos="fade-up" data-aos-delay="100">
-            <div class="stat-card">
-                <h3>${reportData.totalStudents}</h3>
-                <p>Total Students</p>
-            </div>
-            <div class="stat-card">
-                <h3>${reportData.averageAttendance}%</h3>
-                <p>Average Attendance</p>
-            </div>
-            <div class="stat-card">
-                <h3>${reportData.totalPresent}</h3>
-                <p>Total Present</p>
-            </div>
-            <div class="stat-card">
-                <h3>${reportData.totalAbsent}</h3>
-                <p>Total Absent</p>
-            </div>
-        </div>
-
-        <!-- Attendance Overview -->
-        <div class="card" data-aos="fade-up" data-aos-delay="200">
-            <h2 style="color: #48bb78; margin-bottom: 16px;"><i class="fas fa-chart-pie"></i> Attendance Overview</h2>
-            <div class="progress-circle" data-progress="${reportData.averageAttendance}">
-                <svg width="120" height="120">
-                    <circle class="circle-bg" cx="60" cy="60" r="50"></circle>
-                    <circle class="circle-fg" cx="60" cy="60" r="50" 
-                            stroke-dasharray="314" 
-                            stroke-dashoffset="${(100 - reportData.averageAttendance) * 3.14}"></circle>
-                </svg>
-                <span>${reportData.averageAttendance}%</span>
-            </div>
-            <p style="text-align: center; margin: 16px 0; color: #4B5563;">
-                ${reportData.totalPresent} students present, ${reportData.totalAbsent} students absent
-            </p>
-        </div>
-
-        <!-- Detailed Report -->
-        <div class="card" data-aos="fade-up" data-aos-delay="300">
-            <h2 style="color: #48bb78; margin-bottom: 16px;"><i class="fas fa-table"></i> Detailed Report</h2>
+        <div class="card">
+            <h2 style="margin-bottom: 20px; color: #2D3748;">Student Attendance Report</h2>
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Class</th>
-                            <th>Total Students</th>
-                            <th>Present</th>
-                            <th>Absent</th>
-                            <th>Attendance %</th>
+                            <th>Student Name</th>
+                            <th>Total Present</th>
+                            <th>Total Absent</th>
+                            <th>Absent Percentage</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Add dynamic rows based on report data -->
-                        <tr>
-                            <td colspan="6" style="text-align: center;">Select filters and generate report to view data</td>
-                        </tr>
+                        <% 
+                        Map<Integer, List<Attendance>> studentAttendanceMap = (Map<Integer, List<Attendance>>) reportData.get("studentAttendanceMap");
+                        if (students != null && studentAttendanceMap != null) {
+                            for (Student student : students) {
+                                int totalPresent = 0;
+                                int totalAbsent = 0;
+                                double absentPercentage = 0.0;
+                                
+                                // Get attendance records for this student from the map
+                                List<Attendance> attendanceRecords = studentAttendanceMap.get(student.getId());
+                                
+                                // Debugging output
+                                System.out.println("Processing student: " + student.getUsername() + " (ID: " + student.getId() + ")");
+                                if (attendanceRecords != null) {
+                                    System.out.println("Found " + attendanceRecords.size() + " attendance records.");
+                                    for (Attendance record : attendanceRecords) {
+                                        System.out.println("  Record ID: " + record.getId() + ", Status: " + record.getStatus() + ", Date: " + record.getDate());
+                                        if ("present".equalsIgnoreCase(record.getStatus())) {
+                                            totalPresent++;
+                                        } else if ("absent".equalsIgnoreCase(record.getStatus())) {
+                                            totalAbsent++;
+                                        }
+                                    }
+                                } else {
+                                    System.out.println("No attendance records found for this student in the map.");
+                                }
+                                
+                                // Calculate absent percentage
+                                int total = totalPresent + totalAbsent;
+                                if (total > 0) {
+                                    absentPercentage = (double) totalAbsent / total * 100;
+                                }
+                                
+                                // Determine status based on absent percentage
+                                String status = "Good";
+                                String statusColor = "#48bb78";
+                                if (absentPercentage > 30) {
+                                    status = "Poor";
+                                    statusColor = "#E53E3E";
+                                } else if (absentPercentage > 15) {
+                                    status = "Fair";
+                                    statusColor = "#ECC94B";
+                                }
+                        %>
+                            <tr>
+                                <td><%= student.getUsername() %></td>
+                                <td><%= totalPresent %></td>
+                                <td><%= totalAbsent %></td>
+                                <td><%= String.format("%.1f%%", absentPercentage) %></td>
+                                <td style="color: <%= statusColor %>"><%= status %></td>
+                            </tr>
+                        <% }}
+                         %>
                     </tbody>
                 </table>
             </div>
